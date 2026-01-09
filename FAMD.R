@@ -4,23 +4,22 @@ library(FactoMineR)
 library(missMDA)
 library(ggplot2)
 
-## Variables
-dsm_vars <- names(subset)[grepl("^dsm", names(subset))]
+## severity Variables 
+sy_vars <- grep("^sy", names(subset), value = TRUE)
 
 ## Prepare dataset
 data_famd <- subset %>%
   mutate(
     severity_score = rowSums(
-      dplyr::select(., dplyr::all_of(dsm_vars)),
+      dplyr::select(., dplyr::all_of(sy_vars)),
       na.rm = TRUE
     ),
     # categorical variable, NA treated as category
-    alk30kat = alk30kat |> 
-      as.factor() |> 
+    alk30kat = alk30kat |>
+      as.factor() |>
       forcats::fct_explicit_na(na_level = "NA")
   ) %>%
   dplyr::select(
-    ID,
     binge30n,
     alk30kat,
     altalk,
@@ -58,7 +57,7 @@ famd_scores <- famd_scores %>%
 
 ## K-means clustering 
 set.seed(123)
-k <- 3
+k <- 4
 km_res <- kmeans(
   famd_scores[, c("Dim1", "Dim2", "Dim3")],
   centers = k,

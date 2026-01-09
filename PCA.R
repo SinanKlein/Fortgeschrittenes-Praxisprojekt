@@ -9,20 +9,15 @@ library(FactoMineR)
 library(factoextra)
 library(VIM)
 
+# identify all SY variables
+sy_vars <- names(subset)[grepl("^sy", names(subset))]
 
-# Set key
-subset$ID <- seq_len(nrow(subset))
-
-# Create severity_score and prepare data
-
-# identify all DSM variables
-dsm_vars <- names(subset)[grepl("^dsm", names(subset))]
-
-# create severity_score as sum of all dsm* variables
+# create severity_score as sum of all sy* variables
 subset <- subset %>%
   mutate(
+    ID = dplyr::row_number(),
     severity_score = rowSums(
-      dplyr::select(., dplyr::all_of(dsm_vars)),
+      dplyr::select(., dplyr::all_of(sy_vars)),
       na.rm = TRUE
     )
   )
@@ -37,7 +32,7 @@ analysis_complete <- analysis_data %>%
 
 # PCA on the four variables (binge30n, alk30gr, altlak, severity_score)
 
-pca_data <- analysis_imputed %>%
+pca_data <- analysis_complete %>%
   dplyr::select(binge30n, alk30gr, altalk, severity_score)
 
 set.seed(123)
@@ -51,7 +46,7 @@ pca_res <- prcomp(
 pc_scores <- as.data.frame(pca_res$x[, 1:2])
 colnames(pc_scores) <- c("PC1", "PC2")
 
-pc_scores$ID <- analysis_imputed$ID
+pc_scores$ID <- analysis_complete$ID
 
 # k-means clustering on PC1 and PC2 (4 clusters)
 

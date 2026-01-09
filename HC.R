@@ -9,7 +9,7 @@ data_hc <- subset %>%
   mutate(
     ## severity score
     severity_score = rowSums(
-      dplyr::select(., dplyr::starts_with("dsm")),
+      dplyr::select(., dplyr::starts_with("sy")),
       na.rm = TRUE
     ),
     
@@ -78,4 +78,3 @@ data_hc %>%
   summarise(n = n(), .groups = "drop") %>%
   group_by(cluster) %>%
   mutate(prop = n / sum(n))
-
