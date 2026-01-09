@@ -31,22 +31,9 @@ subset <- subset %>%
 analysis_data <- subset %>%
   dplyr::select(ID, binge30n, alk30gr, altalk, severity_score)
 
-# Handle NAs with KNN imputation (simple + robust)
-
-# remove ID before imputation
-analysis_knn_input <- analysis_data %>%
-  dplyr::select(-ID)
-
-# KNN imputation 
-analysis_knn_imputed <- kNN(
-  analysis_knn_input,
-  k       = 5,
-  imp_var = FALSE
-)
-
-# add ID back
-analysis_imputed <- analysis_knn_imputed
-analysis_imputed$ID <- analysis_data$ID
+# Remove rows with any NA in analysis variables
+analysis_complete <- analysis_data %>%
+  drop_na()
 
 # PCA on the four variables (binge30n, alk30gr, altlak, severity_score)
 

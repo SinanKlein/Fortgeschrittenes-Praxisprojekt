@@ -34,6 +34,9 @@ pre_selected_variables <- c(seq(662,667,1),683,686,seq(715,816,1), seq(1334,1338
 subset <- data[, pre_selected_variables]
 subset$id <- data$id
 
+subset <- subset %>%
+  filter(vx210 == 3) 
+
 var_labels_subset <- sapply(subset, function(x) {
   lab <- attr(x, "label")
   

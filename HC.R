@@ -36,7 +36,7 @@ gower_dist <- cluster::daisy(
 hc_res <- hclust(gower_dist, method = "ward.D2")  
 
 ## Choose number of clusters
-k <- 4
+k <- 3
 
 ## Cut tree into k clusters
 data_hc <- data_hc %>%
