@@ -54,7 +54,7 @@ set.seed(314)
 
 kmeans_res <- kmeans(
   pc_scores[, c("PC1", "PC2")],
-  centers = 4,
+  centers = 3,
   nstart  = 25
 )
 
