@@ -12,13 +12,27 @@ library(VIM)
 # identify all SY variables
 sy_vars <- names(subset)[grepl("^sy", names(subset))]
 
+# analyse missingess of SY variables
+
+sy_na_summary <- subset %>%
+  mutate(
+    n_sy_total = length(sy_vars),
+    n_sy_na    = rowSums(is.na(dplyr::select(., all_of(sy_vars))))
+  )
+
+table(sy_na_summary$n_sy_na > 0)
+
+# in 176 cases, at least one of the SY variables is NA
+
+subset <- subset %>%
+  filter(rowSums(is.na(dplyr::select(., dplyr::all_of(sy_vars)))) == 0)
+
 # create severity_score as sum of all sy* variables
 subset <- subset %>%
   mutate(
     ID = dplyr::row_number(),
     severity_score = rowSums(
-      dplyr::select(., dplyr::all_of(sy_vars)),
-      na.rm = TRUE
+      dplyr::select(., dplyr::all_of(sy_vars))
     )
   )
 
