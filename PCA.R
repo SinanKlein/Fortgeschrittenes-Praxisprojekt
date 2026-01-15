@@ -38,7 +38,7 @@ subset <- subset %>%
 
 # keep only the variables needed for PCA + clustering
 analysis_data <- subset %>%
-  dplyr::select(ID, binge30n, alk30gr, altalk, severity_score)
+  dplyr::select(ID, alk30gr, severity_score, binge30n)
 
 # Remove rows with any NA in analysis variables
 analysis_complete <- analysis_data %>%
@@ -47,7 +47,7 @@ analysis_complete <- analysis_data %>%
 # PCA on the four variables (binge30n, alk30gr, altlak, severity_score)
 
 pca_data <- analysis_complete %>%
-  dplyr::select(binge30n, alk30gr, altalk, severity_score)
+  dplyr::select(binge30n, alk30gr, severity_score)
 
 set.seed(123)
 
@@ -68,7 +68,7 @@ set.seed(314)
 
 kmeans_res <- kmeans(
   pc_scores[, c("PC1", "PC2")],
-  centers = 3,
+  centers = 4,
   nstart  = 25
 )
 
