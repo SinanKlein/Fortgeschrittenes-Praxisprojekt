@@ -8,6 +8,7 @@ library(haven) # for is.labelled() + as_factor()
 library(FactoMineR)
 library(factoextra)
 library(VIM)
+library(missMDA)
 
 # identify all SY variables
 sy_vars <- names(subset)[grepl("^sy", names(subset))]
@@ -40,16 +41,24 @@ subset <- subset %>%
 analysis_data <- subset %>%
   dplyr::select(ID, alk30gr, severity_score, binge30n)
 
-# Remove rows with any NA in analysis variables
-analysis_complete <- analysis_data %>%
-  drop_na()
+# alcohol variables only
+X <- pca_data %>%
+  as.data.frame() %>%
+  data.matrix()   # ensure numeric matrix
+
+# PCA-based imputation
+imp <- imputePCA(X, ncp = 2, scale = TRUE)
+
+# robust extraction (works across versions)
+X_imp <- if (is.list(imp)) imp$completeObs else imp
+
+# PCA on imputed data
+pca_res <- prcomp(X_imp, scale. = TRUE)
 
 # PCA on the four variables (binge30n, alk30gr, altlak, severity_score)
 
 pca_data <- analysis_complete %>%
   dplyr::select(binge30n, alk30gr, severity_score)
-
-set.seed(123)
 
 pca_res <- prcomp(
   pca_data,
