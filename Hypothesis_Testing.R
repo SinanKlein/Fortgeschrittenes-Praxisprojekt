@@ -481,9 +481,20 @@ ggplot(plot_data_mar, aes(x = cluster, y = prop, fill = fam)) +
 # table for chi squared test
 
 profile_data_cat <- profile_data %>% 
-  select(cluster, severity_score, d5al_de, altq, ges, 
-         hne, isced, fam, allein, schule, income_cat, 
-         income_cat2)
+  select(cluster,
+    #vx210,     # LAST TIME ALCOHOL CONSUMED
+    #alter,     # AGE
+    altq,      # AGE CATEGORY
+    ges,       # GENDER
+    fam,       # MARITIAL STATUS
+    #partnerhh, # PARTNER IN HOUSEHOLD
+    #hh,        # NUMBER OF PEOPLE IN HOUSEHOLD
+    #hh14,      # NUMBER OF PEOPLE IN HOUSEHOLD AGED <14
+    allein,    # LIVES ALONE
+    schule,    # EDUCATION LEVEL
+    #f122,      # NET INCOME LEVEL OF HOUSEHOLD IN €
+    #f116,
+    income_cat2)
 
 for (col in setdiff(names(profile_data_cat), "cluster")) {
   tab <- table(profile_data_cat$cluster, profile_data_cat[[col]])
@@ -500,29 +511,48 @@ for (col in setdiff(names(profile_data_cat), "cluster")) {
   )
 }
 
-# problem with chi square: many cells have 0 or less than 5
+# problem with chi square: in some variables many cells have 0 or less than 5
+# using fishers exact test with monte carlo for those variables
 # significance level 0.05
+set.seed(123)
+# GENDER
+gender_cluster_table <- table(profile_data_cat$cluster, profile_data_cat$ges)
+# test_gender_cluster <- chisq.test(gender_cluster_table)
+# only 60% cells are > 5, so we use fishers exact test with monte carlo stimulations
+test_gender_cluster <- fisher.test(gender_cluster_table, simulate.p.value = TRUE, B = 10000)
 
-# GENDER CHI SQUARE
-gender_cluster_table <- table(profile_data_cat$cluster, profile_data_cat$ges)[1:4, 1:2] # without diverse
-test_gender_cluster <- chisq.test(gender_cluster_table)
+# EDUCATION LEVEL (only 50% expected cells > 5)
+schule_cluster_table <- table(profile_data_cat$cluster, profile_data_cat$schule)
+# test_schule_cluster <- chisq.test(schule_cluster_table)
+fisher.test(schule_cluster_table, simulate.p.value = TRUE, B = 10000)
 
-# INCOME CHI SQUARE
+# INCOME (90% expected cells > 5, no 0 cells)
 income_cluster_table <- table(profile_data_cat$cluster, profile_data_cat$income_cat2)
 test_income_cluster <- chisq.test(income_cluster_table)
 
-# ALLEIN CHI SQUARE
+# ALLEIN (all expected cells are > 5)
 allein_cluster_table <- table(profile_data_cat$cluster, profile_data_cat$allein)
 test_allein_cluster <- chisq.test(allein_cluster_table)
 
-# FAM CHI SQUARED
+# FAM 
 fam_cluster_table <- table(profile_data_cat$cluster, profile_data_cat$fam)[, 2:6] # k.A removed
 test_fam_cluster <- chisq.test(fam_cluster_table)
+# fishers exact on original table to be sure:
+fisher.test(table(profile_data_cat$cluster, profile_data_cat$fam), simulate.p.value = TRUE, B = 10000)
 
 # AGEQ CHI SQUARED
-altq_cluster_table <- table(profile_data_cat$cluster, profile_data_cat$altq)[, 2:9]
+altq_cluster_table <- table(profile_data_cat$cluster, profile_data_cat$altq)
 test_altq_cluster <- chisq.test(altq_cluster_table)
+# fishers exact:
+fisher.test(table(profile_data_cat$cluster, profile_data_cat$altq), simulate.p.value = TRUE, B = 10000)
 
+# why monte carlo? 
+# fishers exact becomes computationally impossible due to large contingency tables
+# monte carlo generates tables with the same row and column number under H0 (no assz)
+# the estimate converges to the truth with the number of stimulations
+
+# conclusion:
+# variable distr. significantly differ across clusters
 # all p values lesser than .05: significant difference between the clusters
 # significant relationship between each variable and cluster membership
 
@@ -531,16 +561,16 @@ test_altq_cluster <- chisq.test(altq_cluster_table)
 
 # CRAMERS V EFFECT SIZE ---------------------------------------------------
 
-install.packages("rcompanion")
-library(rcompanion)
-
-# df = min(nrow - 1, ncol - 1)
-
-cramerV(gender_cluster_table) # df = 1, weak asz.
-cramerV(income_cluster_table) # df = 3, small to medium asz.
-cramerV(allein_cluster_table) # df = 1, weak asz.
-cramerV(fam_cluster_table) # df = 3, weak asz.
-cramerV(altq_cluster_table) # df = medium to strong asz. , but some cells include 0
+# install.packages("rcompanion")
+# library(rcompanion)
+# 
+# # df = min(nrow - 1, ncol - 1)
+# 
+# cramerV(gender_cluster_table) # df = 1, weak asz.
+# cramerV(income_cluster_table) # df = 3, small to medium asz.
+# cramerV(allein_cluster_table) # df = 1, weak asz.
+# cramerV(fam_cluster_table) # df = 3, weak asz.
+# cramerV(altq_cluster_table) # df = medium to strong asz. , but some cells include 0
 
 # -------------------------------------------------------------------------
 
@@ -549,19 +579,19 @@ cramerV(altq_cluster_table) # df = medium to strong asz. , but some cells includ
 
 # DISCUSS
 
-ggplot(data) +
-  geom_density(aes(x = altalk))
-
-altalk_alk30kat_df <- data %>% select(altalk, alk30kat) %>% drop_na()
-
-altalk_alk30kat_df <- altalk_alk30kat_df %>% mutate(altalk_kat = cut(altalk,
-                                                                     breaks= c(0,10,15,20,25,Inf)))
-
-
-t <- table(altalk_alk30kat_df$alk30kat, altalk_alk30kat_df$altalk_kat)
-
-chisq.test(t)
-cramerV(t) # weak asz.
+# ggplot(data) +
+#   geom_density(aes(x = altalk))
+# 
+# altalk_alk30kat_df <- data %>% select(altalk, alk30kat) %>% drop_na()
+# 
+# altalk_alk30kat_df <- altalk_alk30kat_df %>% mutate(altalk_kat = cut(altalk,
+#                                                                      breaks= c(0,10,15,20,25,Inf)))
+# 
+# 
+# t <- table(altalk_alk30kat_df$alk30kat, altalk_alk30kat_df$altalk_kat)
+# 
+# chisq.test(t)
+# cramerV(t) # weak asz.
 
 # if we say altalk is insignificant, then what does that say about other results since they have similar significance?
 
