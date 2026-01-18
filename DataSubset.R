@@ -29,7 +29,7 @@ label_table <- data.frame(
   row.names = NULL
 )
 
-pre_selected_variables <- c(seq(662,667,1),683,686,seq(715,816,1), seq(1334,1338,1), seq(1340,1345,1))
+pre_selected_variables <- c(seq(662,667,1),683,684, 686,seq(715,816,1), seq(1334,1338,1), seq(1340,1345,1))
 
 subset <- data[, pre_selected_variables]
 subset$id <- data$id
