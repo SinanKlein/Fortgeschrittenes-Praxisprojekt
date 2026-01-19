@@ -42,7 +42,7 @@ analysis_final <- analysis_final %>%
 # Choose the sociodemographic variables 
 # altq, ges, hne, isced, fam, allein, schule
 
-soc_vars <- c("altq", "ges", "hne", "isced")
+soc_vars <- c("alter", "ges", "hne", "isced", "fam")
 
 # Overall summary (now analysis_final exists)
 
