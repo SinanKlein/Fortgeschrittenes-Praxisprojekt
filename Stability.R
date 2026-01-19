@@ -1,6 +1,6 @@
-# Cluster Stability Test (END-TO-END: bootstrap raw -> PCA -> kmeans -> Jaccard)
+# Cluster Stability Test (END-TO-END: bootstrap raw -> imputePCA -> PCA -> kmeans -> Jaccard)
 # This script assumes PCA.R has already been run and created:
-#   - pca_data      (data frame: binge30n, alk30gr, severity_score)
+#   - pca_data      (data frame or matrix: binge30n, alk30gr, severity_score)
 #   - kmeans_res    (kmeans result from clustering on PC1/PC2 of the reference PCA)
 #
 # Output:
@@ -8,13 +8,12 @@
 
 library(dplyr)
 library(gtools)
+library(missMDA)
 
-# sanity checks (pipeline via git: run PCA.R first)
+# sanity checks 
 
 stopifnot(exists("pca_data"))
 stopifnot(exists("kmeans_res"))
-
-# settings (match your PCA script)
 
 set.seed(123)
 
@@ -24,12 +23,17 @@ BN <- 200                             # increase to 500+ for final
 # reference clustering (from PCA.R)
 
 cluster_ref <- kmeans_res$cluster
-n <- nrow(pca_data)
 
-# ensure numeric matrix
+# ensure numeric matrix (RAW input space)
+
 X <- pca_data %>%
   as.data.frame() %>%
   data.matrix()
+
+n <- nrow(X)
+
+imp_full <- imputePCA(X, ncp = 2, scale = TRUE)
+X_full_imp <- imp_full$completeObs
 
 # helper: compute Jaccard matrix between two clusterings
 # rows = reference clusters, cols = bootstrap clusters
@@ -57,29 +61,40 @@ best_match_perm <- function(J) {
   perms[which.max(scores), ]
 }
 
-
 # bootstrap loop (end-to-end)
 # For each bootstrap:
-#   - resample rows
-#   - recompute PCA (with scaling)
-#   - project ALL original X into bootstrap PCA space
+#   - resample rows (RAW X)
+#   - recompute imputePCA (with scaling)  
+#   - recompute PCA on imputed bootstrap sample (with scaling)
+#   - project all original (imputed) X into bootstrap PCA space
 #   - run kmeans in that space
 #   - compute matched Jaccards vs reference
 
 jaccard_store <- matrix(NA, nrow = BN, ncol = chosen_k)
+skipped <- 0
 
 for (b in 1:BN) {
   
   idx <- sample(seq_len(n), size = n, replace = TRUE)
   Xb  <- X[idx, , drop = FALSE]
   
+  imp_b <- imputePCA(Xb, ncp = 2, scale = TRUE)
+  Xb_imp <- imp_b$completeObs
+  
+  # Mathematically invalid bootstrap draws
+  if (any(apply(Xb_imp, 2, sd) == 0)) {
+    skipped <- skipped + 1
+    next
+  }
+  
   pca_b <- prcomp(
-    Xb,
+    Xb_imp,
     scale. = TRUE
   )
   
-  # project ALL original points into bootstrap PCA space
-  X_centered <- sweep(X, 2, pca_b$center, "-")
+  # project all original points into bootstrap PCA space
+  # (use the full imputed matrix so there are no NAs)
+  X_centered <- sweep(X_full_imp, 2, pca_b$center, "-")
   X_scaled   <- sweep(X_centered, 2, pca_b$scale, "/")
   scores_b   <- X_scaled %*% pca_b$rotation[, 1:2, drop = FALSE]
   
@@ -113,3 +128,4 @@ stability_DF$interpretation <- cut(
 )
 
 stability_DF
+

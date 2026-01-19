@@ -41,13 +41,13 @@ analysis_data <- subset %>%
   dplyr::select(ID, alk30gr, severity_score, binge30n)
 
 # alcohol variables only
-X <- analysis_data %>%
+pca_data <- analysis_data %>%
   dplyr::select(binge30n, alk30gr, severity_score) %>%
   as.data.frame() %>%
   data.matrix()   # ensure numeric matrix
 
 # PCA-based imputation
-imp <- imputePCA(X, ncp = 2, scale = TRUE)
+imp <- imputePCA(pca_data, ncp = 2, scale = TRUE)
 
 # robust extraction (works across versions)
 X_imp <- if (is.list(imp)) imp$completeObs else imp
