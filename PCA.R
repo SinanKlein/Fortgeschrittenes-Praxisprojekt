@@ -23,12 +23,7 @@ sy_na_summary <- subset %>%
 
 table(sy_na_summary$n_sy_na > 0)
 
-# in 176 cases, at least one of the SY variables is NA
-
-subset <- subset %>%
-  filter(rowSums(is.na(dplyr::select(., dplyr::all_of(sy_vars)))) == 0)
-
-# create severity_score as information-weighted symptom severity
+# create severity_score as information-weighted symptom severity (do NOT drop NAs)
 subset <- subset %>%
   mutate(
     ID = dplyr::row_number(),
@@ -46,7 +41,8 @@ analysis_data <- subset %>%
   dplyr::select(ID, alk30gr, severity_score, binge30n)
 
 # alcohol variables only
-X <- pca_data %>%
+X <- analysis_data %>%
+  dplyr::select(binge30n, alk30gr, severity_score) %>%
   as.data.frame() %>%
   data.matrix()   # ensure numeric matrix
 
@@ -59,21 +55,11 @@ X_imp <- if (is.list(imp)) imp$completeObs else imp
 # PCA on imputed data
 pca_res <- prcomp(X_imp, scale. = TRUE)
 
-# PCA on the four variables (binge30n, alk30gr, altlak, severity_score)
-
-pca_data <- analysis_complete %>%
-  dplyr::select(binge30n, alk30gr, severity_score)
-
-pca_res <- prcomp(
-  pca_data,
-  scale. = TRUE
-)
-
 # extract PC1 and PC2 scores for each individual
 pc_scores <- as.data.frame(pca_res$x[, 1:2])
 colnames(pc_scores) <- c("PC1", "PC2")
 
-pc_scores$ID <- analysis_complete$ID
+pc_scores$ID <- analysis_data$ID
 
 # k-means clustering on PC1 and PC2 (4 clusters)
 

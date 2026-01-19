@@ -42,7 +42,26 @@ analysis_final <- analysis_final %>%
 # Choose the sociodemographic variables 
 # altq, ges, hne, isced, fam, allein, schule
 
-soc_vars <- c("altq", "ges", "hne", "isced")   
+soc_vars <- c("altq", "ges", "hne", "isced")
+
+# Overall summary (now analysis_final exists)
+
+overall_summary <- lapply(soc_vars, function(v) {
+  
+  x <- analysis_final[[v]]
+  
+  data.frame(
+    variable    = v,
+    n_total     = length(x),
+    n_nonNA     = sum(!is.na(x)),
+    n_NA        = sum(is.na(x)),
+    pct_missing = round(mean(is.na(x)) * 100, 2),
+    n_levels    = length(unique(x[!is.na(x)]))
+  )
+})
+
+overall_summary <- bind_rows(overall_summary)
+overall_summary
 
 profile_data_cat <- analysis_final %>%
   dplyr::select(cluster, dplyr::all_of(soc_vars))
@@ -72,6 +91,8 @@ chi_summary
 
 # General chi-square loop 
 
+chi_pvals <- c()
+
 for (col in setdiff(names(profile_data_cat), "cluster")) {
   
   # contingency table (drop NA categories)
@@ -79,6 +100,9 @@ for (col in setdiff(names(profile_data_cat), "cluster")) {
   
   # chi-square test
   test <- suppressWarnings(chisq.test(tab))
+  
+  # store p-values for Holm correction
+  chi_pvals[col] <- test$p.value
   
   # diagnostic for expected counts
   expected_ok_ratio <- sum(test$expected > 5) / length(test$expected)
@@ -107,6 +131,19 @@ for (col in setdiff(names(profile_data_cat), "cluster")) {
   cat("\nTOP STANDARDIZED RESIDUALS (absolute)\n")
   print(head(stdres_tbl, 12))
 }
+
+# Holm correction (across all tested variables)
+
+chi_pvals_holm <- p.adjust(chi_pvals, method = "holm")
+
+holm_table <- data.frame(
+  variable = names(chi_pvals),
+  p_value_raw = as.numeric(chi_pvals),
+  p_value_holm = as.numeric(chi_pvals_holm)
+)
+
+holm_table <- holm_table[order(holm_table$variable), ]
+holm_table
 
 # Interpretation:
 # |std_resid| > 2  -> strong over/under-representation
