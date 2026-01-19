@@ -28,12 +28,16 @@ table(sy_na_summary$n_sy_na > 0)
 subset <- subset %>%
   filter(rowSums(is.na(dplyr::select(., dplyr::all_of(sy_vars)))) == 0)
 
-# create severity_score as sum of all sy* variables
+# create severity_score as information-weighted symptom severity
 subset <- subset %>%
   mutate(
     ID = dplyr::row_number(),
-    severity_score = rowSums(
-      dplyr::select(., dplyr::all_of(sy_vars))
+    n_sy_obs = rowSums(!is.na(dplyr::select(., dplyr::all_of(sy_vars)))),
+    n_sy_pos = rowSums(dplyr::select(., dplyr::all_of(sy_vars)) == 1, na.rm = TRUE),
+    severity_score = ifelse(
+      n_sy_obs == 0,
+      NA,
+      (n_sy_pos / n_sy_obs) * log1p(n_sy_obs)
     )
   )
 
