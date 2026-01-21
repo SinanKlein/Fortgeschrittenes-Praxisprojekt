@@ -34,7 +34,8 @@ TOTAL_Visualisation_Data <- Ausw_ber %>%
     hh,        # NUMBER OF PEOPLE IN HOUSEHOLD
     hh14,      # NUMBER OF PEOPLE IN HOUSEHOLD AGED <14
     allein,    # LIVES ALONE
-    schule,    # EDUCATION LEVEL
+    # schule,    # EDUCATION LEVEL
+    isced,     # ISCED EDUCATION LEVEL
     f122,      # NET INCOME LEVEL OF HOUSEHOLD IN €
     f116       # EMPLOYMENT
          )
@@ -44,7 +45,8 @@ TOTAL_Visualisation_Data <- Ausw_ber %>%
 # with the clustering process and would create problematic clusters and profiles.
 # This threshold was chosen together with the respective external project partner: Dr. Sally Olderbak
 ALCOHOLIC_Visualisation_Data <- TOTAL_Visualisation_Data %>%
-  dplyr::filter(as.numeric(vx210) == 3)
+  dplyr::mutate(vx210 = as.numeric(haven::zap_labels(vx210))) %>% 
+  dplyr::filter(vx210 == 2)
 
 # PLOT1: Abstinence & Alcoholics ------------------------------------------
 
@@ -71,15 +73,15 @@ AlcoholConsumption_PLOT1 <- ggplot(TOTAL_Visualisation_Data, aes(x = vx210_f)) +
        title = 'Time Since Last Alcohol Consumption',
        subtitle = expression(italic('Following discussions with our external partner, Dr. Sally Olderbak, analyses were restricted to participants who reported alcohol use within the last 30 days.'))) +
   theme(axis.text.x = element_text(angle = 0)) +
-  scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 20)) + 
+  scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 20)) +
   geom_text(stat = "count", aes(y = after_stat(count / sum(count)),
                                 label = scales::percent(after_stat(count / sum(count)),accuracy = 1)),
             vjust = -1.5,
             size = 4)
 
-png("AlcoholConsumption_PLOT1.png", width = 1000, height = 609)
-print(AlcoholConsumption_PLOT1)
-dev.off()
+# png("AlcoholConsumption_PLOT1.png", width = 1000, height = 609)
+# print(AlcoholConsumption_PLOT1)
+# dev.off()
 
 # PLOT2: Age & Gender -----------------------------------------------------
 
@@ -141,9 +143,9 @@ AgeGender_PLOT2 <- ggplot(ALCOHOLIC_Visualisation_Data, aes(x = altq_f,
   #   size = 4
   # )
 
-png("AgeGender_PLOT2.png", width = 1000, height = 609)
-print(AgeGender_PLOT2)
-dev.off()
+# png("AgeGender_PLOT2.png", width = 1000, height = 609)
+# print(AgeGender_PLOT2)
+# dev.off()
 
 # PLOT3: Income & Gender ------------------------------------------------
 
@@ -184,9 +186,9 @@ IncomeGender_PLOT3 <- ggplot(ALCOHOLIC_Visualisation_Data, aes(x = f122_f,
                                "Diverse" = "#D55E00")) +
   theme(axis.text.x = element_text(angle = 45, vjust = 0.5))
 
-png("IncomeGender_PLOT3.png", width = 1000, height = 609)
-print(IncomeGender_PLOT3)
-dev.off()
+# png("IncomeGender_PLOT3.png", width = 1000, height = 609)
+# print(IncomeGender_PLOT3)
+# dev.off()
 
 # PLOT4: Kids & Gender -------------------------------------------
 
@@ -215,7 +217,38 @@ KidsGender_PLOT4 <- ggplot(ALCOHOLIC_Visualisation_Data, aes(x = hh14_f)) +
        y = "Number of participants",
        title = "Household Composition: Number of Children Under 14")
 
-png("KidsGender_PLOT4.png", width = 1000, height = 609)
-print(KidsGender_PLOT4)
-dev.off()
+# png("KidsGender_PLOT4.png", width = 1000, height = 609)
+# print(KidsGender_PLOT4)
+# dev.off()
+
+# PLOT5: Gender & Education -----------------------------------------------
+
+ALCOHOLIC_Visualisation_Data$isced_f <- factor(
+  ALCOHOLIC_Visualisation_Data$isced,
+  levels = c(-1, 1, 2, 3),
+  labels = c(
+    "No Information",                                    # k.A.
+    "LOW (Primary to Lower Secondary)",                  # LOW (primary+secondary I)
+    "INTERMEDIATE (Upper Secondary to Post Secondary)",  # INTERMEDIATE (secondary II+post-sec/non-tert.)
+    "HIGH (Tertiary Education)"                          # HIGH (tertiary I+II)
+  )
+)
+
+ALCOHOLIC_Visualisation_Data$isced_f <- addNA(ALCOHOLIC_Visualisation_Data$isced_f, ifany = TRUE)
+levels(ALCOHOLIC_Visualisation_Data$isced_f)[is.na(levels(ALCOHOLIC_Visualisation_Data$isced_f))] <- "No data"
+
+EducationGender_PLOT4 <- ggplot(ALCOHOLIC_Visualisation_Data, aes(x = isced_f,
+                                                               fill = ges_f)) +
+  geom_bar(position = 'dodge') +
+  labs(x = "Level of Education", 
+       y = "Number of participants",
+       title = "Education Level Distribution by Gender",
+       subtitle = expression(italic('Education categories were derived directly from the categories provided in the raw dataset.')),
+       fill = "Participant\nGender") +
+  scale_fill_manual(values = c("Male" = "#0072B2",  
+                               "Female" = "#E69F00",
+                               "Diverse" = "#D55E00")) +
+  theme(axis.text.x = element_text(vjust = 0.5)) +
+  scale_x_discrete(labels = function(x) stringr::str_wrap(x, width = 20))
+  
 
