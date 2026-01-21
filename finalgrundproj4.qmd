@@ -2,7 +2,7 @@
 title: "Identifying Different Types of Alcohol Consumers in Germany: A PCA-Based Clustering Approach"
 subtitle: "Institut für Statistik, München"
 author: "Sinan Klein, Venüs Kocabas, Uzay Erturan, Nika Curcija, Alp Erdem"
-date: "11 December 2025"
+date: "22 January 2065"
 institute: "Betreuerin:Sabine Hoffmann"
 format: 
   revealjs:
@@ -215,11 +215,17 @@ adjusting for varying response completeness.
 ## PCA Analysis (2)
 
 ::: {.text-center}
-![](Dotplotfinal.png){width=80%}
+![](Dotplotfinal.png){width=60%}
 :::
+::: {.text-center style="font-size: 0.7em;"}
+| Cluster     | n  | Binge drinking days (Mean ± SD) | Daily alcohol consumption (Mean ± SD) | Severity score (Mean ± SD) |
+|-------------|----|----------------------------------|----------------------------------------|----------------------------|
+| 1   |1416 |**0.96** ± 1.82               |    **13.3** ± 15                           |**0.09** ± 0.18            |
+| 2   |90    | **18.8**  ± 6.98               | **75.2** ± 41.5                         |**0.42** ± 0.45            |
+| 3   |392    |**3.22** ± 3.03                |**56.6** ± 39.3                          |**1.37** ± 0.45            |
+| 4   |80    |**18.2**  ± 8.13                |**231** ± 96.5                           |**2**  ± 0.41              |
 
-
-
+:::
 
 ## Identifying and Validating Cluster Amount (1)
 
