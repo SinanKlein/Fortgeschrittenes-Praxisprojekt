@@ -51,7 +51,7 @@ imp <- imputePCA(pca_data, ncp = 2, scale = TRUE)
 
 # robust extraction (works across versions)
 X_imp <- if (is.list(imp)) imp$completeObs else imp
-
+  
 # PCA on imputed data
 pca_res <- prcomp(X_imp, scale. = TRUE)
 
@@ -93,7 +93,28 @@ ggplot(pc_scores, aes(x = PC1, y = PC2, color = cluster)) +
 
 # Plot 2: arrow plot (variables' contributions to PCs)
 
-fviz_pca_var(
+rownames(pca_res$rotation) <- c(
+  "Binge drinking days",
+  "Average daily\nethanol (g)",
+  "Severity score"
+)
+
+correlation_circle <- fviz_pca_var(
   pca_res,
-  repel = TRUE
+  repel = TRUE,
+  labelsize = 6,
+  
+  title = "Correlation Circle"
+) +
+  theme(plot.title = element_text(size = 18, face = "bold"),
+    axis.title = element_text(size = 16))
+
+out_dir <- "Fortgeschrittenes-Praxisprojekt/correlation_circle.png"
+
+ggsave(
+  filename = file.path(out_dir),
+  plot = correlation_circle,
+  dpi = 300,
+  width = 16,
+  height = 9
 )
