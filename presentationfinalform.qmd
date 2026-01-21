@@ -127,8 +127,7 @@ library(patchwork)
 ## Data Pre-Processing and Variable Selection (3)
 
 - [Handling Missing Data]{style="color:#006400; font-weight:bold;"}:
-    - [How We Handled MAR in Our Analysis]{style="color:#006400; font-weight:bold;"}  
-        - Missing values were imputed using Principal Component Analysis (PCA):
+    - Missing values were imputed using [Principal Component Analysis (PCA):]{style="color:#006400; font-weight:bold;"}
         - ```imp <- imputePCA(X, ncp = 2, scale = TRUE) ```
     - [How PCA Imputation Works]{style="color:#006400; font-weight:bold;"}  
         - PCA identifies the [main latent structure]{style="color:#006400; font-weight:bold;"} in the observed data
@@ -202,15 +201,15 @@ library(patchwork)
 ## PCA Analysis (2)
 
 ::: {.text-center}
-![](Dotplotfinal.png){width=60%}
+![](scatter_plot.png){width=60%}
 :::
 ::: {.text-center style="font-size: 0.7em;"}
 | Cluster     | n  | Binge drinking days (Mean ± SD) | Daily alcohol consumption (Mean ± SD) | Severity score (Mean ± SD) |
 |-------------|----|----------------------------------|----------------------------------------|----------------------------|
-| 1   |1416 |**0.96** ± 1.82               |    **13.3** ± 15                           |**0.09** ± 0.18            |
-| 2   |90    | **18.8**  ± 6.98               | **75.2** ± 41.5                         |**0.42** ± 0.45            |
-| 3   |392    |**3.22** ± 3.03                |**56.6** ± 39.3                          |**1.37** ± 0.45            |
-| 4   |80    |**18.2**  ± 8.13                |**231** ± 96.5                           |**2**  ± 0.41              |
+| 1   |391 |**3.22** ± 3.03               |    **56.9** ± 39.4                           |**6.46** ± 2.09            |
+| 2   |1410    | **0.97**  ± 1.87               | **13.3** ± 15.1                         |**0.43** ± 0.83            |
+| 3   |80    |**18.1** ± 8.18                |**232** ± 95.8                          |**9.48** ± 1.9            |
+| 4   |88    |**19.1**  ± 6.89                |**76.7** ± 41.1                           |**2.09**  ± 2.24              |
 
 :::
 
@@ -347,7 +346,7 @@ library(patchwork)
 
 :::: { .column width="60%" }
 <!-- Left column content -->
-![](Mapping/marital_status_plot.png){width=100%} 
+![](Mapping/marital_status_plot.png){width=90%} 
 - [Test]{style="color:#006400; font-weight:bold;"}: Pearson’s chi-square  
 
 - [p-value]{style="color:#006400; font-weight:bold;"}: 1.72e−07 → significant  
@@ -386,11 +385,5 @@ but it adds additional social context.
 
 - Therefore, the current results should be seen as a [first demographic characterization]{style="color:#006400; font-weight:bold;"},  
   not as a complete explanation of the clusters.
-
-
-
-
-::: {.text-center}
-![](Dotplotfinal.png){width=60%}
 
 
