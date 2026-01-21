@@ -1,8 +1,7 @@
-install.packages("haven")
 library(haven)
 library(tidyverse)
 
-setwd("C:/Sinan_Klein/LMU/lmu_prak2")
+setwd("C:/Users/nika/Documents/LMU Semester 5/Praxisprojekt")
 list.files()
 data <- read_dta("Ausw_ber.dta")
 
@@ -29,7 +28,7 @@ label_table <- data.frame(
   row.names = NULL
 )
 
-pre_selected_variables <- c(seq(662,667,1),683,684, 686,seq(715,816,1), seq(1334,1338,1), seq(1340,1345,1))
+pre_selected_variables <- c(seq(662,667,1),683,684, 686,seq(715,816,1), seq(1334,1338,1), seq(1340,1345,1), 688, 696, 699, 243)
 
 subset <- data[, pre_selected_variables]
 subset$id <- data$id

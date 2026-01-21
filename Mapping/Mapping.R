@@ -7,7 +7,9 @@ library(haven)
 
 # Adding imputed variables
 
-analysis_final <- subset
+analysis_final <- subset %>%
+  filter(!is.na(severity_score)) %>%
+  dplyr::select(ID, everything())
 
 imputed_profiles <- as.data.frame(X_imp)
 
@@ -17,15 +19,13 @@ colnames(imputed_profiles) <- c(
   "severity_score_imp"
 )
 
-imputed_profiles$ID <- analysis_final$ID
+imputed_profiles$ID <- analysis_data$ID
 
 analysis_final <- analysis_final %>%
-  left_join(imputed_profiles, by = "ID")
-
-analysis_final <- analysis_final %>%
+  left_join(imputed_profiles, by = "ID") %>%
   mutate(
     cluster = factor(cluster,
-                     levels = c(1, 2, 3, 4),
+                     levels = c("1", "2", "3", "4"),
                      labels = c("Cluster 1", "Cluster 2", "Cluster 3", "Cluster 4"))
   )
 
@@ -33,7 +33,10 @@ profile_data <- analysis_final %>%
   dplyr::select(cluster, 
                 binge30n, alk30gr, severity_score, # original vars
                 binge30n_imp, alk30gr_imp, severity_score_imp, # imputed vars
-                alter, ges, hne, isced, fam, allein, schule, hh14) # sociodemographics
+                alter, ges, hne, isced, fam, allein, schule, hh14,
+                subges2, thera, dep, f34open) # sociodemographics
+
+
 
 ### 1) Drinking profiles of clusters
 
@@ -84,19 +87,18 @@ profile_mean_sd <- profile_data %>%
     .groups = "drop"
   )
 
+
 profile_mean_sd
 
 ## Only mean to get a quick overview
 
 profile_mean_sd %>% 
-  dplyr::select(n, cluster, binge30n_imp_mean, alk30gr_imp_mean, severity_score_imp_mean)
+  dplyr::select(n, cluster, binge30n_imp_mean, alk30gr_imp_mean, severity_score_imp_mean) 
 
-### Cluster names
-
-# Cluster 1: low binge drinking, low average daily consumption, no well-documented symptoms
-# Cluster 2: high binge drinking, high average daily consumption, low levels of symptoms
-# Cluster 3: low binge drinking, high average daily consumption, elevated levels of symptoms
-# Cluster 4: high binge drinking, very high average daily consumption, high levels of well-documented symptoms
+# Cluster 1: low binge, moderate to high avg daily ethanol intake, moderate severity
+# Cluster 2: low binge, low avg daily ethanol intake, low severity
+# Cluster 3: high binge, very high avg daily ethanol intake, high severity
+# Cluster 4: high binge, high avg daily ethanol intake, low severity
 
 # Defining cluster color palette
 
@@ -106,6 +108,7 @@ cluster_colors <- c(
   "Cluster 3" = "#0072B2",
   "Cluster 4" = "#009E73"
 )
+
 
 # Distribution of clustering variables 
 
@@ -124,8 +127,7 @@ key_long <- key_long %>%
                            levels = names(var_labels),
                            labels = var_labels))
 
-
-cluster_sizes_text <- c("1" = 1416, "2" = 90, "3" = 392, "4" = 80)
+cluster_sizes_text <- c("1" = 391, "2" = 1410, "3" = 80, "4" = 88)
 
 cluster_sizes
 
@@ -161,6 +163,14 @@ clustering_plot <- ggplot(key_long, aes(x = cluster, y = value, fill = cluster))
 
 clustering_plot
 
+profile_data %>%
+  dplyr::select(cluster, f34open) %>%
+  mutate(more_15 = ifelse(f34open >= 15, 1, 0)) %>%
+  count(cluster, more_15, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(pct = n / sum(n) * 100) %>%
+  ungroup()
+
 ### 2) Sociodemographic profiles of clusters
 ## Sociodemographic variables of interest
 # Primarily: age, gender, education, income
@@ -179,9 +189,6 @@ profile_data <- profile_data %>%
     ges = factor(ges,
                  levels = c(1, 2, 3),
                  labels = c("Male", "Female", "Diverse")))%>%
-  mutate(
-    
-  ) %>%
   mutate(
     income_cat2 = case_when(
       hne %in% 1:3   ~ "< 1000",
@@ -248,6 +255,34 @@ gender_summary <- profile_data %>%
   group_by(cluster) %>%
   mutate(pct = n / sum(n) * 100) %>%
   ungroup()
+
+income_summary <- profile_data %>%
+  count(cluster, hne, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(pct = n / sum(n) * 100) %>%
+  ungroup()
+
+
+profile_data %>%
+  count(cluster, dep, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(pct = n / sum(n) * 100) %>%
+  ungroup()
+
+
+profile_data %>%
+  count(cluster, income_cat2, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(pct = n / sum(n) * 100) %>%
+  ungroup()
+
+profile_data %>%
+  count(cluster, thera, name = "n") %>%
+  group_by(cluster) %>%
+  mutate(pct = n / sum(n) * 100) %>%
+  ungroup()
+
+
 
 gender_summary
 
