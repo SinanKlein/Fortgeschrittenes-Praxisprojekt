@@ -365,11 +365,10 @@ but it adds additional social context.
 
 ## Key Takeaways
 
-- [Distinct alcohol consumption profiles]{style="color:#006400; font-weight:bold;"} can be robustly identified in the German population using [PCA-based clustering]{style="color:#006400; font-weight:bold;"}.
-- A [four-cluster solution]{style="color:#006400; font-weight:bold;"} captures meaningful differences in [consumption intensity, risk behavior, and severity]{style="color:#006400; font-weight:bold;"}, supported by [silhouette and stability analyses]{style="color:#006400; font-weight:bold;"}.
-- Clusters exhibit [systematic demographic and social differentiation]{style="color:#006400; font-weight:bold;"}, driven primarily by [age]{style="color:#006400; font-weight:bold;"}, and secondarily by [gender, income, education, and marital status]{style="color:#006400; font-weight:bold;"}.
+- [Distinct alcohol consumption profiles]{style="color:#006400; font-weight:bold;"} can be robustly identified in the dataset using [PCA-based clustering]{style="color:#006400; font-weight:bold;"}.
+- A [four-cluster solution]{style="color:#006400; font-weight:bold;"} captures differences in [consumption intensity, risk behavior, and severity]{style="color:#006400; font-weight:bold;"}, supported by [silhouette and stability analyses]{style="color:#006400; font-weight:bold;"}.
+- Clusters exhibit [demographic and social differentiation]{style="color:#006400; font-weight:bold;"}, driven primarily by [age]{style="color:#006400; font-weight:bold;"}, and secondarily by [gender, income, education, and marital status]{style="color:#006400; font-weight:bold;"}.
 - Applying [PCA before K-means]{style="color:#006400; font-weight:bold;"} improves clustering reliability by reducing [dimensionality, correlation, and noise]{style="color:#006400; font-weight:bold;"}.
-- The resulting typology provides a [data-driven foundation for targeted public health interventions and policy design]{style="color:#006400; font-weight:bold;"}.
 
 
 ## Disscusion
