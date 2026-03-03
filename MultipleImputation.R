@@ -59,7 +59,7 @@ subset1 <- subset1 %>%
 #summary(subset1)
 
 # seeing NA frequency in data
-na_count <-sapply(subset1, function(y) sum(length(which(is.na(y))))/length(y))
+na_count <- sapply(subset1, function(y) sum(length(which(is.na(y))))/length(y))
 
 library(mice)
 
@@ -85,4 +85,15 @@ imputation <- mice(data = subset1,
 
 na_imp <- sapply(imputation$data, function(y) sum(length(which(is.na(y))))/length(y))
 
+# use this subset if:
+# if we are using individal alc types
 imputed_subset <- complete(imputation, 1)
+
+# if we are using total alc:
+imputed_subset <- complete(imputation, 1) %>% 
+  mutate(totalalc = wein30gr + bier30gr + mish30gr + spir30gr) %>% 
+  select(-c(wein30gr, bier30gr, mish30gr, spir30gr))
+
+
+# plot(imputation)
+# stripplot(imputation)
