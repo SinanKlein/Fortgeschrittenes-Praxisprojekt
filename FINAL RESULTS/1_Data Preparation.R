@@ -1,3 +1,4 @@
+library(naniar)
 # 1. Data Preparation 
 # Here we transform and do all the necessary stuff for the data.
 
@@ -56,9 +57,19 @@ subset1 <- subset1 %>%
 # seeing NA frequency in data
 na_count <- sapply(subset1, function(y) sum(length(which(is.na(y))))/length(y))
 
+# interlude: MCAR Test
+imputation_model_vars <- subset1 %>%
+  select(ends_with("30gr"), binge30n, starts_with("sy")) %>%
+  mutate(across(starts_with("sy"), ~ as.numeric(as.character(.))))
+
+mcar_result <- mcar_test(imputation_model_vars)
+print(mcar_result)
+# p < .05 -> MCAR rejected
+
 # extracting names of the variables
 categorical <- c(names(alcohol_data_full %>% select(starts_with("sy"))), 'hne', 'isced') 
 continuous <- names(subset1 %>% select(ends_with('30gr'), binge30n))
+
 
 # setting methods for mice
 meth <- make.method(subset1)
