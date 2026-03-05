@@ -86,7 +86,7 @@ meth[contin]  <- "pmm"
 imputation <- mice(data = subset1,
                    m = 25,
                    maxit = 5,
-                   seed = 123,
+                   seed = 5,
                    print = FALSE,
                    method = meth
 )
@@ -130,7 +130,7 @@ imputed_subset_pct_trans <- imputed_subset_pct %>%
 # ########### -------------------------------------------------------------
 # 4. K MEANS CLUSTERING ---------------------------------------------------
 
-set.seed(123)
+set.seed(5)
 k <- 3
 KMeansClustering <- kmeans(
   imputed_subset_pct_trans,
@@ -149,6 +149,8 @@ corrMatrix(as.data.frame(imputed_subset_pct_trans))
 # 5. SILHOUTTE SCORE  -----------------------------------------------------
 
 kN <- seq(from = 2, to = 10, by = 1) # we will be running these possible cluster numbers.
+
+library(cluster)
 
 silhouette_method <- function(scores = imputed_subset_pct_trans, 
                               sequence = kN, 
@@ -194,10 +196,10 @@ SilhoutteResultsKMeans <- silhouette_method()$best_k
 
 # 6. CLUSTER VALIDATION: CLUSTERBOOT --------------------------------------
 
-chosen_k <- SilhoutteResults
+chosen_k <- SilhoutteResultsKMeans
 
 stability_scores <- function(data, 
-                             seedN = 123,
+                             seedN = 5,
                              BN = 200,
                              k) {
   cluster_bootstrapped <- clusterboot(data,
@@ -277,7 +279,7 @@ HClusters <- cutree(HierarchicalClustering, SilhouetteResults_hclust)
 table(HClusters)
 
 stability_scores_hclust <- function(data,
-                                    seedN = 123,
+                                    seedN = 5,
                                     BN = 200,
                                     k,
                                     linkage = "ward.D") {
@@ -349,14 +351,14 @@ silhouette_method_pam <- function(scores = imputed_subset_pct_PAM,
 }
 
 SilhouetteResultsPAM <- silhouette_method_pam()$best_k
-# [1] 4
+# [1] 3
 # different k so the clusterboot would both be done with 3 and 4
 
 PAMClustering <- pam(imputed_subset_pct_PAM, 3)
 table(PAMClustering$clustering)
 
 stability_scores_pam <- function(data,
-                                 seedN = 123,
+                                 seedN = 5,
                                  BN = 200,
                                  k) {
   cluster_bootstrapped <- clusterboot(data,
@@ -399,6 +401,12 @@ cluster_assignments <- data.frame(
   cluster_pam       = PAMClustering$clustering
 )
 
+
+table(cluster_assignments$cluster_kmeans)
+table(cluster_assignments$cluster_hclust)
+table(cluster_assignments$cluster_pam)
+
+
 # join all cluster assignments back to original untransformed data
 imputed_subset <- imputed_subset %>%
   left_join(cluster_assignments, by = "id")
@@ -419,3 +427,4 @@ imputed_subset %>%
 imputed_subset %>%
   group_by(cluster_pam) %>%
   summarise(across(where(is.numeric), mean, na.rm = TRUE))
+
