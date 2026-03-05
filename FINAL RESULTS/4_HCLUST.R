@@ -81,7 +81,7 @@ for(i in 1:25) {
   
   DataToTransform <- imputed_list[[i]]
   
-  TransformedData <- KMeans_transformation(DataToTransform)
+  TransformedData <- HCLUST_transformation(DataToTransform)
   
   KValue <- HCLUST_silhouette_method(TransformedData)$best_k
   
@@ -209,3 +209,134 @@ HCLUST_AggragatedStability <- HCLUST_StabilityAll %>%
     labels = c("Dissolved", "Partial recovery", "Good recovery")
 ))
 
+# F. HCLUST Mapping -------------------------------------------------------
+
+# Restore full imputed dataset (alter, ges, hne, isced were dropped in Section B)
+imputed_list <- complete(imputation, 'all')
+
+# Computing the means and sd of clustering variables in their original scales per imputation
+# sd: between-imputation standard deviation of cluster means, reflecting uncertainty due to missing data!
+# so it is not the within-cluster sd
+
+HCLUST_Profiles <- map_dfr(1:25, function(i) {
+  
+  df <- imputed_list[[i]] %>%
+    mutate(
+      cluster = factor(HCLUSTaligned_clusters[[i]])
+    ) %>%
+    mutate(across(starts_with("sy"), ~ as.integer(as.character(.)))) %>%
+    mutate(severity_score = rowSums(pick(starts_with("sy"))))
+  
+  df %>%
+    group_by(cluster) %>%
+    summarise(
+      beer_g     = mean(bier30gr),
+      wine_g     = mean(wein30gr),
+      spirits_g  = mean(spir30gr),
+      mixed_g    = mean(mish30gr),
+      binge_days = mean(binge30n),
+      severity   = mean(severity_score),
+      n = n(),
+      .groups = "drop"
+    ) %>%
+    mutate(imputation = i)
+})
+
+# Computing the pooled mean and sd over all imputations
+
+HCLUST_Profiles_Pooled <- HCLUST_Profiles %>%
+  group_by(cluster) %>%
+  summarise(
+    across(c(beer_g, wine_g, spirits_g, mixed_g, binge_days, severity, n),
+           list(mean = mean, sd = sd),
+           .names = "{.col}_{.fn}"),
+    .groups = "drop"
+  )
+
+HCLUST_Profiles_Pooled
+
+# Table with only pooled means
+
+HCLUST_Profiles_Table <- HCLUST_Profiles %>%
+  group_by(cluster) %>%
+  summarise(
+    beer_g     = mean(beer_g),
+    wine_g     = mean(wine_g),
+    spirits_g  = mean(spirits_g),
+    mixed_g    = mean(mixed_g),
+    binge_days = mean(binge_days),
+    severity   = mean(severity),
+    n          = round(mean(n)),
+    .groups = "drop"
+  )
+
+HCLUST_Profiles_Table
+
+# Mean and sd of cluster sizes across imputations
+
+HCLUST_cluster_Sizes_Summary <- HCLUST_Profiles %>%
+  group_by(cluster) %>%
+  summarise(
+    n_mean = mean(n),
+    n_sd   = sd(n),
+    n_min  = min(n),
+    n_max  = max(n),
+    .groups = "drop"
+  )
+
+HCLUST_cluster_Sizes_Summary
+
+# Cluster sizes when using majority-vote cluster assignments
+
+HCLUST_Final_Sizes <- table(factor(majority_clusters, levels = 1:ChosenK))
+HCLUST_Final_Sizes
+
+# Sociodemographic profiles
+
+HCLUST_external_profiles <- map_dfr(1:25, function(i){
+  
+  df <- imputed_list[[i]] %>%
+    mutate(cluster = factor(HCLUSTaligned_clusters[[i]]))
+  
+  df %>%
+    group_by(cluster) %>%
+    summarise(
+      mean_age     = mean(alter),
+      pct_women    = mean(ges == "2"),
+      pct_low_edu  = mean(isced == 1) * 100,
+      pct_mid_edu  = mean(isced == 2) * 100,
+      pct_high_edu = mean(isced == 3) * 100,
+      n = n(),
+      .groups = "drop"
+    ) %>%
+    mutate(imputation = i)
+})
+
+HCLUST_external_profiles_pooled <- HCLUST_external_profiles %>%
+  group_by(cluster) %>%
+  summarise(
+    mean_age     = mean(mean_age),
+    pct_women    = mean(pct_women),
+    pct_low_edu  = mean(pct_low_edu),
+    pct_mid_edu  = mean(pct_mid_edu),
+    pct_high_edu = mean(pct_high_edu),
+    n            = round(mean(n)),
+    .groups = "drop"
+  )
+
+HCLUST_external_profiles_pooled
+
+# Stability of clusters themselves
+
+HCLUST_stability_by_cluster <- tibble(
+  cluster   = factor(majority_clusters),
+  stability = stability
+) %>%
+  group_by(cluster) %>%
+  summarise(
+    mean_stability     = mean(stability),
+    pct_high_stability = mean(stability > 0.8) * 100,
+    n = n()
+  )
+
+HCLUST_stability_by_cluster
