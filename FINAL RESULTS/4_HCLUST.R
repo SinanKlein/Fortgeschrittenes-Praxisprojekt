@@ -325,18 +325,3 @@ HCLUST_external_profiles_pooled <- HCLUST_external_profiles %>%
   )
 
 HCLUST_external_profiles_pooled
-
-# Stability of clusters themselves
-
-HCLUST_stability_by_cluster <- tibble(
-  cluster   = factor(majority_clusters),
-  stability = stability
-) %>%
-  group_by(cluster) %>%
-  summarise(
-    mean_stability     = mean(stability),
-    pct_high_stability = mean(stability > 0.8) * 100,
-    n = n()
-  )
-
-HCLUST_stability_by_cluster

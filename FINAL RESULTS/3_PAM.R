@@ -152,7 +152,7 @@ table(PAM_FinalClusters$cluster)
 PAMStability_Scores <- function(data, seedN = 5, BN = 100, k = ChosenK) {
   cluster_bootstrapped <- clusterboot(data,
                                       B = BN,
-                                      clustermethod = claraCBI,
+                                      clustermethod = claraCBI, #pamkCBI is too slow
                                       k = k,
                                       seed = seedN)
   stability_DF <- data.frame(
@@ -305,18 +305,3 @@ PAM_external_profiles_pooled <- PAM_external_profiles %>%
   )
 
 PAM_external_profiles_pooled
-
-# Stability of clusters themselves
-
-PAM_stability_by_cluster <- tibble(
-  cluster   = factor(majority_clusters),
-  stability = stability
-) %>%
-  group_by(cluster) %>%
-  summarise(
-    mean_stability     = mean(stability),
-    pct_high_stability = mean(stability > 0.8) * 100,
-    n = n()
-  )
-
-PAM_stability_by_cluster

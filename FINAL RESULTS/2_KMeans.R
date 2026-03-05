@@ -176,7 +176,7 @@ for (i in 1:25) {
 
 vote_matrix <- do.call(cbind, KMeansaligned_clusters)
 
-majority_clusters <- apply(vote_matrix, 1, function(x) {
+KMeans_majority_clusters <- apply(vote_matrix, 1, function(x) {
   as.integer(names(which.max(table(x))))
 })
 
@@ -185,10 +185,10 @@ stability <- apply(vote_matrix, 1, function(x) {
 })
 
 KMeans_FinalClusters <- imputed_list[[1]] %>%
-  mutate(cluster   = as.factor(majority_clusters),
+  mutate(cluster   = as.factor(KMeans_majority_clusters),
          stability = round(stability, 3))
 
-KMeans_FinalClusters$cluster   <- as.factor(majority_clusters)
+KMeans_FinalClusters$cluster   <- as.factor(KMeans_majority_clusters)
 KMeans_FinalClusters$stability <- round(stability, 3)
 
 table(KMeans_FinalClusters$cluster)
@@ -312,13 +312,13 @@ KMeans_cluster_Sizes_Summary
 
 # Cluster sizes when using majority-vote cluster assignments
 
-KMeans_Final_Sizes <- table(factor(majority_clusters, levels = 1:ChosenK))
+KMeans_Final_Sizes <- table(factor(KMeans_majority_clusters, levels = 1:ChosenK))
 KMeans_Final_Sizes
 
-# Using the majority-vote cluster assignments to characterize the clusters by sociodemographics
+# Using aligned cluster assignments per imputation to characterise clusters by sociodemographics
 # education is missing
 
-external_profiles <- map_dfr(1:25, function(i){
+KMeans_external_profiles <- map_dfr(1:25, function(i){
   
   df <- imputed_list[[i]] %>%
     mutate(cluster = factor(KMeansaligned_clusters[[i]]))
@@ -340,7 +340,7 @@ external_profiles <- map_dfr(1:25, function(i){
     mutate(imputation=i)
 })
 
-external_profiles_pooled <- external_profiles %>%
+KMeans_external_profiles_pooled <- KMeans_external_profiles %>%
   group_by(cluster) %>%
   summarise(
     mean_age = mean(mean_age),
@@ -353,19 +353,4 @@ external_profiles_pooled <- external_profiles %>%
     .groups="drop"
   )
 
-external_profiles_pooled
-
-# Stability of clusters themselves
-
-stability_by_cluster <- tibble(
-  cluster = factor(majority_clusters),
-  stability = stability
-) %>%
-  group_by(cluster) %>%
-  summarise(
-    mean_stability = mean(stability),
-    pct_high_stability = mean(stability > 0.8) * 100,
-    n = n()
-  )
-
-stability_by_cluster
+KMeans_external_profiles_pooled
