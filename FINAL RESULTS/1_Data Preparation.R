@@ -41,11 +41,11 @@ subset1 <- subset1 %>%
 # imputing 0 if the person said they havent had alcohol type
 subset1 <- subset1 %>% 
   mutate(
-    bier30gr = if_else(bierkons == "nein", 0, bier30gr),
-    wein30gr = if_else(weinkons == "nein", 0, wein30gr),
-    spir30gr = if_else(spirkons == "nein", 0, spir30gr),
-    mish30gr = if_else(mishkons == "nein", 0, mish30gr)
-  ) %>% 
+    bier30gr = if_else(bierkons == 0, 0, bier30gr),
+    wein30gr = if_else(weinkons == 0, 0, wein30gr),
+    spir30gr = if_else(spirkons == 0, 0, spir30gr),
+    mish30gr = if_else(mishkons == 0, 0, mish30gr)
+  ) %>%
   select(-c(vx210,
             bierkons,
             weinkons,

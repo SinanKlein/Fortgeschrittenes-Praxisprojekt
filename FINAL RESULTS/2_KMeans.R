@@ -195,7 +195,7 @@ table(KMeans_FinalClusters$cluster)
 
 # E. KMeans Validation ----------------------------------------------------
 
-KMeansStability_Scores <- function(data, seedN = 5, BN = 100, k) {
+KMeansStability_Scores <- function(data, seedN = 123, BN = 100, k) {
   cluster_bootstrapped <- clusterboot(data,
                                       B = BN,
                                       clustermethod = kmeansCBI,
