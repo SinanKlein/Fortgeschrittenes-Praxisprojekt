@@ -8,6 +8,11 @@ libraries <- c(
   "jmv", "stats", "ggplot2"
 )
 
+new_packages <- libraries[!(libraries %in% installed.packages()[, "Package"])]
+if (length(new_packages) > 0) {
+  install.packages(new_packages, dependencies = TRUE)
+}
+
 invisible(lapply(libraries, library, character.only = TRUE))
 
 set.seed(123)
