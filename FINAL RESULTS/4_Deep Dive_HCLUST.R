@@ -133,8 +133,8 @@ for (i in 1:25) {
 }
 
 # For Comparison
-ChosenK_height <- as.integer(names(which.max(table(height_k_vec))))
-ChosenK_sil    <- as.integer(names(which.max(table(sil_k_vec))))
+ChosenK_height <- as.integer(names(which.max(table(unlist(height_k_vec)))))
+ChosenK_sil    <- as.integer(names(which.max(table(unlist(sil_k_vec)))))
 
 ChosenK <- ChosenK_height
 
