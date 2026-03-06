@@ -1,16 +1,11 @@
-# 2. KMeans 
+# 2. Clustering with 'K-Means' Method 
 
-library(cluster)
-library(clue)
-library(dplyr)
-library(tidyr)
-library(purrr)
-library(ggplot2)
+# 1. Prerequisites ---------------------------------------------------------
+
 set.seed(123)
 imputed_list <- complete(imputation, 'all')
 
-
-# A. KMeans Specific Functions --------------------------------------------
+# 2. 'K-Means' Specific Functions --------------------------------------------
 
 KMeans_transformation <- function(dataset) {
   imputed_subset_pct <- dataset %>%
@@ -20,33 +15,38 @@ KMeans_transformation <- function(dataset) {
   imputed_subset_pct <- imputed_subset_pct %>% 
     mutate(
       binge_pct = as.numeric(binge30n) / 30, # standardization binge30n
-      severity_pct = severity_score / 12     # standardization severity_score --> no problem with ordinality anymore (?)
+      severity_pct = severity_score / 12     # standardization severity_score
     ) %>% 
     select(-c(starts_with("sy"), binge30n, severity_score))
   
   imputed_subset_pct_trans <- imputed_subset_pct %>% 
-    mutate(bier30gr = log1p(bier30gr),
-           wein30gr = log1p(wein30gr),
-           spir30gr = log1p(spir30gr),
-           mish30gr = log1p(mish30gr)) %>% 
+    mutate(bier30gr = (bier30gr)^(1/2),
+           wein30gr = (wein30gr)^(1/2),
+           spir30gr = (spir30gr)^(1/2),
+           mish30gr = (mish30gr)^(1/2)) %>% 
     scale()
   
   return(imputed_subset_pct_trans)
 }
 
-KMeans_silhouette_method <- function(scores, 
-                              sequence = seq(from = 2, to = 10, by = 1), 
-                              runN = 25){  
+KMeans_silhouette_method <- function(scores,
+                                     sequence = seq(from = 2, to = 10, by = 1),
+                                     runN = 25){  
   avg_sil_score <- numeric(length(sequence))
+  
   for(i in seq_along(sequence)){
     k <- sequence[i]
     k_means <- kmeans(scores, centers = k, nstart = runN)  
     sil_score <- silhouette(k_means$cluster, dist(scores))  
     avg_sil_score[i] <- mean(sil_score[,'sil_width'])
   }
+  
   results <- data.frame(k = sequence, avg_silhouette = avg_sil_score)
-  filtered_results <- results[!results$k %in% c(1,2), ] # interpretibility
+  
+  filtered_results <- results[!results$k %in% c(1,2), ] # For interpretability reasons
+  
   optimal_k <- filtered_results$k[which.max(filtered_results$avg_silhouette)]
+  
   sil_plot <- ggplot(filtered_results, aes(x = k, y = avg_silhouette)) +
     geom_line() +
     geom_point(size = 2) +
@@ -71,9 +71,10 @@ KMeans_silhouette_method <- function(scores,
               plot = sil_plot))
 }
 
-# B. KMeans Silhouette Method ---------------------------------------------
+# 3. Silhouette Method on 'K-Means' --------------------------------------------
 
 sil_k <- numeric()
+
 for(i in 1:25) {
   
   imputed_list[[i]] <- imputed_list[[i]] %>% 
@@ -89,10 +90,12 @@ for(i in 1:25) {
 }
 
 ChosenK <- as.integer(names(which.max(table(sil_k))))
+# [1] 3
 
-# C. KMeans Clustering ----------------------------------------------------
+# 4.A Clustering with 'K-Means' ----------------------------------------------------
+
 KMeans_ClusterResults <- vector('list', 25)
-TransformedData_list  <- vector('list', 25)
+TransformedData_list <- vector('list', 25)
 
 for(i in 1:25) {
   
@@ -105,15 +108,17 @@ for(i in 1:25) {
     nstart  = 25)
 }
 
-# D. KMeans Cluster Alignment ---------------------------------------------
+# 4.B Cluster Alignment ---------------------------------------------
+
+# Important Remark: Anthropic's AI Agent Claude with the version Sonnet 4.6 was used for this part.  
 
 align_to_reference <- function(ref_centers, new_km) {
-  # Build cost matrix: distance between each pair of centroids
+  
   cost_matrix <- as.matrix(dist(rbind(ref_centers, new_km$centers)))[
     1:nrow(ref_centers), 
     (nrow(ref_centers) + 1):(nrow(ref_centers) + nrow(new_km$centers))
   ]
-  # Optimal assignment
+  
   assignment <- solve_LSAP(cost_matrix)
   mapping <- setNames(1:nrow(ref_centers), as.integer(assignment))
   new_labels <- mapping[as.character(new_km$cluster)]
@@ -128,51 +133,7 @@ KMeansaligned_clusters <- lapply(1:25, function(i) {
   align_to_reference(ref_centers, KMeans_ClusterResults[[i]])
 })
 
-# For Validation
-for(i in 1:25){
-  print(table(KMeansaligned_clusters[[i]]))
-}
-
-for (i in 1:25) {
-  cat("\nImputation", i, "\n")
-  print(table(KMeansaligned_clusters[[i]]))
-}
-
-# FORMER APPROACH 
-# aligned_clusters <- lapply(1:25, function(i) {
-#   
-#   km <- KMeans_ClusterResults[[i]]
-#   cluster_sizes <- table(km$cluster)
-#   
-#   # Rank clusters by size (largest = rank 1, smallest = rank 3)
-#   size_rank <- rank(-cluster_sizes, ties.method = "first")
-#   mapping   <- setNames(as.integer(size_rank), names(cluster_sizes))
-#   new_labels <- as.integer(mapping[as.character(km$cluster)])
-#   
-#   return(new_labels)
-# })
-# 
-# # Verify sizes
-# size_check <- sapply(aligned_clusters, table)
-# print(size_check)
-# 
-# # Show cluster means for each imputation
-# for(i in 1:25) {
-#   cat("\n========== Dataset", i, "==========\n")
-#   
-#   temp_df <- as.data.frame(TransformedData_list[[i]])
-#   temp_df$cluster <- aligned_clusters[[i]]
-#   
-#   means <- temp_df %>%
-#     group_by(cluster) %>%
-#     summarise(across(everything(), ~ round(mean(.), 3)),
-#               n = n()) %>%
-#     arrange(cluster)
-#   
-#   print(means)
-# }
-
-# D. KMeans Majority Voting and Defining Clusters ---------------------------
+# 5. 'K-Means' Majority Voting and Defining Clusters ---------------------------
 
 vote_matrix <- do.call(cbind, KMeansaligned_clusters)
 
@@ -193,29 +154,35 @@ KMeans_FinalClusters$stability <- round(stability, 3)
 
 table(KMeans_FinalClusters$cluster)
 
-# E. KMeans Validation ----------------------------------------------------
+# 6. 'K-Means' External Validation through Bootstrapping ----------------------
 
 KMeansStability_Scores <- function(data, seedN = 123, BN = 100, k) {
+  
   cluster_bootstrapped <- clusterboot(data,
                                       B = BN,
                                       clustermethod = kmeansCBI,
                                       k = k,
                                       seed = seedN)
+  
   stability_DF <- data.frame(
     cluster           = seq_along(cluster_bootstrapped$bootmean),
-    jaccard_stability = cluster_bootstrapped$bootmean
-  )
+    jaccard_stability = cluster_bootstrapped$bootmean)
+  
   stability_DF$interpretation <- cut(
     stability_DF$jaccard_stability,
     breaks = c(-Inf, 0.5, 0.75, Inf),
     labels = c("Dissolved", "Partial recovery", "Good recovery")
   )
+  
   return(stability_DF)
 }
 
 KMeans_StabilityAll <- lapply(1:25, function(i) {
+  
   data_i <- as.data.frame(TransformedData_list[[i]])
+  
   KMeansStability_Scores(data = data_i, k = ChosenK)
+
 })
 
 KMeans_AggragatedStability <- KMeans_StabilityAll %>%
@@ -230,17 +197,13 @@ KMeans_AggragatedStability <- KMeans_StabilityAll %>%
     mean_jaccard,
     breaks = c(-Inf, 0.5, 0.75, Inf),
     labels = c("Dissolved", "Partial recovery", "Good recovery")
-  ))
+    ))
 
+KMeans_AggragatedStability
 
-# F. KMeans Mapping# -------------------------------------------------------------
+# 7. Exploring the 'K-Means' Results-------------------------------------------------------------
 
-# Restore full imputed dataset (alter, ges, hne, isced were dropped in Section B)
 imputed_list <- complete(imputation, 'all')
-
-# Computing the means and sd of clustering variables in their original scales per imputation
-# sd: between-imputation standard deviation of cluster means, reflecting uncertainty due to missing data!
-# so it is not the within-cluster sd
 
 KMeans_Profiles <- map_dfr(1:25, function(i) {
   
@@ -266,21 +229,6 @@ KMeans_Profiles <- map_dfr(1:25, function(i) {
     mutate(imputation = i)
 })
 
-# Computing the pooled mean and sd of clustering variables in their original scales over all imputations
-
-KMeans_Profiles_Pooled <- KMeans_Profiles %>%
-  group_by(cluster) %>%
-  summarise(
-    across(c(beer_g, wine_g, spirits_g, mixed_g, binge_days, severity, n),
-           list(mean = mean, sd = sd),
-           .names = "{.col}_{.fn}"),
-    .groups = "drop"
-  )
-
-KMeans_Profiles_Pooled
-
-# Table with only pooled means
-
 KMeans_Profiles_Table <- KMeans_Profiles %>%
   group_by(cluster) %>%
   summarise(
@@ -294,9 +242,14 @@ KMeans_Profiles_Table <- KMeans_Profiles %>%
     .groups = "drop"
   )
 
-KMeans_Profiles_Table
-
-# Mean and sd of cluster sizes across imputations
+KMeans_Profiles_Table_With_SD <- KMeans_Profiles %>%
+  group_by(cluster) %>%
+  summarise(
+    across(c(beer_g, wine_g, spirits_g, mixed_g, binge_days, severity, n),
+           list(mean = mean, sd = sd),
+           .names = "{.col}_{.fn}"),
+    .groups = "drop"
+)
 
 KMeans_cluster_Sizes_Summary <- KMeans_Profiles %>%
   group_by(cluster) %>%
@@ -308,49 +261,4 @@ KMeans_cluster_Sizes_Summary <- KMeans_Profiles %>%
     .groups = "drop"
   )
 
-KMeans_cluster_Sizes_Summary
-
-# Cluster sizes when using majority-vote cluster assignments
-
-KMeans_Final_Sizes <- table(factor(KMeans_majority_clusters, levels = 1:ChosenK))
-KMeans_Final_Sizes
-
-# Using aligned cluster assignments per imputation to characterise clusters by sociodemographics
-# education is missing
-
-KMeans_external_profiles <- map_dfr(1:25, function(i){
-  
-  df <- imputed_list[[i]] %>%
-    mutate(cluster = factor(KMeansaligned_clusters[[i]]))
-  
-  df %>%
-    group_by(cluster) %>%
-    summarise(
-      mean_age = mean(alter),
-      
-      pct_women = mean(ges == "2"),
-      
-      pct_low_edu  = mean(isced == 1) * 100,
-      pct_mid_edu  = mean(isced == 2) * 100,
-      pct_high_edu = mean(isced == 3) * 100,
-      
-      n = n(),
-      .groups="drop"
-    ) %>%
-    mutate(imputation=i)
-})
-
-KMeans_external_profiles_pooled <- KMeans_external_profiles %>%
-  group_by(cluster) %>%
-  summarise(
-    mean_age = mean(mean_age),
-    pct_women = mean(pct_women),
-    pct_low_edu  = mean(pct_low_edu),
-    pct_mid_edu  = mean(pct_mid_edu),
-    pct_high_edu = mean(pct_high_edu),
-    n = round(mean(n)),
-    
-    .groups="drop"
-  )
-
-KMeans_external_profiles_pooled
+KMeans_Profiles_Table

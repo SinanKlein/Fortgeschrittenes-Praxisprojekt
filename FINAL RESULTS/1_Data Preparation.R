@@ -1,16 +1,19 @@
-library(naniar)
 # 1. Data Preparation 
-# Here we transform and do all the necessary stuff for the data.
+
+# 1. Reading in the Data --------------------------------------------------
 
 data <- read_dta("Ausw_ber.dta")
+
+# 2. Cleaning the Data ----------------------------------------------------
+
 alcohol_data_full <- data[c(715:816,
                             683,  # age
                             686,  # gender
-                            1341, # hne
-                            1345  # education
+                            1341, # hne - household income
+                            1345  # education level
 )]
 
-# subset with binary alcohol types
+# Subset with the binary alcohol usage data
 subset1 <- alcohol_data_full %>% 
   select(wein30gr,
          bier30gr,
@@ -27,19 +30,18 @@ subset1 <- alcohol_data_full %>%
          ges,
          hne,
          isced) %>% 
-  filter(vx210 == 3) # sobreity mark = 30 days (3 in this instance)
+  filter(vx210 == 3) # Sobriety Mark = 30 days (3 in this instance) (Chosen with external partner)
 
-# adding row numbers
+# Addition of row numbers
 subset1 <- subset1 %>% mutate(id = row_number())
 
-# fixing problem in haven labelled
 subset1 <- subset1 %>%
-  mutate(across(everything(), to_factor))
+  mutate(across(everything(), sjmisc::to_factor))
 
 subset1 <- subset1 %>% 
   mutate(across(c(ends_with("30gr"), alter, binge30n), ~ as.numeric(as.character(.))))
 
-# imputing 0 if the person said they havent had alcohol type
+# Imputation 0, IF the person said they haven't had the relevant alcohol type
 subset1 <- subset1 %>% 
   mutate(
     bier30gr = if_else(bierkons == 0, 0, bier30gr),
@@ -54,10 +56,12 @@ subset1 <- subset1 %>%
             mishkons,
             id))
 
-# seeing NA frequency in data
+# Seeing NA frequency in data
 na_count <- sapply(subset1, function(y) sum(length(which(is.na(y))))/length(y))
 
-# interlude: MCAR Test
+
+# (INTERLUDE 1) Little's MCAR Test ------------------------------------------
+
 imputation_model_vars <- subset1 %>%
   select(ends_with("30gr"), binge30n, starts_with("sy")) %>%
   mutate(across(starts_with("sy"), ~ as.numeric(as.character(.))))
@@ -66,20 +70,81 @@ mcar_result <- mcar_test(imputation_model_vars)
 print(mcar_result)
 # p < .05 -> MCAR rejected
 
-# extracting names of the variables
-categorical <- c(names(alcohol_data_full %>% select(starts_with("sy"))), 'hne', 'isced') 
-continuous <- names(subset1 %>% select(ends_with('30gr'), binge30n))
 
+# (INTERLUDE 2) MAR Plausibiliy Check -------------------------------------
 
-# setting methods for mice
+MAR_Full <- data[c(715:816,
+                   683,  # age
+                   684,  # age category
+                   686,  # gender
+                   1341, # hne
+                   1345  # education
+)]
+
+MARSubset <- MAR_Full %>% 
+  select(starts_with("sy"),
+         vx210,
+         altq) %>% 
+  filter(vx210 == 3) %>%
+  mutate(across(starts_with("sy"), 
+                ~ as.integer(is.na(.)), 
+                .names = "{.col}_missing")) %>% 
+  mutate(age_group = case_when(
+    altq %in% c(1, 2) ~ "<20",
+    altq %in% c(3, 4, 5) ~ "20-40",
+    altq %in% c(6, 7) ~ "40-60",
+    altq %in% c(8, 9) ~ ">60",
+    .default = NA_character_
+  )) %>% 
+  select(-c("sy_al_9",
+            "sy_al_10",
+            "sy_al_11",
+            "sy_al_12",
+            "sy_al_7",
+            "sy_al_2",
+            "sy_al_3",
+            "sy_al_4",
+            "sy_al_5",
+            "sy_al_6",
+            "sy_al_8",
+            "sy_al_1",
+            "vx210",
+            "altq"))
+
+FirstVisualInspection <- MARSubset %>%
+  select(age_group, ends_with("_missing")) %>%
+  pivot_longer(-age_group, names_to = "variable", values_to = "missing") %>%
+  group_by(age_group, variable) %>%
+  summarise(prop_missing = mean(missing), .groups = "drop") %>%
+  pivot_wider(names_from = age_group, values_from = prop_missing)
+
+missing_cols <- MARSubset %>% select(ends_with("_missing")) %>% names()
+
+map_dfr(missing_cols, ~ {
+  test <- chisq.test(table(MARSubset[[.x]], MARSubset$age_group))
+  tibble(variable = .x,
+         chi_sq = test$statistic,
+         p_value = test$p.value)
+})
+
+FirstVisualInspection
+missing_cols
+
+# 3. Multiple Imputation --------------------------------------------------
+
+# Extraction of the variable names
+categorical <- c(names(alcohol_data_full 
+                       %>% select(starts_with("sy"))), 'hne', 'isced') 
+continuous <- names(subset1 
+                    %>% select(ends_with('30gr'), binge30n))
+
+# Defining the methods for MICE
 meth <- make.method(subset1)
-meth[categorical]  <- "cart" 
-# cart instead of logreg because 0 and 1 amounts are very different
-meth[continuous]  <- "pmm" 
-# pmm for numeric values
+meth[categorical]  <- "cart" # 'cart' instead of 'logreg' because 0 and 1 amounts are very different
+meth[continuous]  <- "pmm"   # 'pmm' for numeric values
 
-# multiple imputation
-# TAKES A LOT OF TIME!
+# Multiple Imputation
+# Important Remark: This part does indeed take some time (approx. 5 minutes)
 imputation <- mice(data = subset1,
                    m = 25,
                    maxit = 5,
