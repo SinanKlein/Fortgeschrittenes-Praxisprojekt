@@ -131,7 +131,7 @@ PAMaligned_clusters <- lapply(1:25, function(i) {
   if (i == 1) return(as.integer(PAM_ClusterResults[[1]]$clustering))
   
   align_to_reference(ref_centers, PAM_ClusterResults[[i]])
-  
+
 })
 
 # 5.  'PAM' Majority Voting and Defining Clusters --------------------------
@@ -174,8 +174,8 @@ PAM_StabilityAll <- lapply(1:25, function(i) {
   data_i <- as.data.frame(TransformedData_list[[i]])
   
   PAMStability_Scores(data = data_i, k = ChosenK)
-  
-})
+
+  })
 
 PAM_AggragatedStability <- PAM_StabilityAll %>%
   bind_rows(.id = "imputation") %>%
@@ -212,7 +212,7 @@ for(i in 1:25) {
                                                                          `3` = '2000 - 3000',
                                                                          `4` = '3000 - 5000',
                                                                          `5` = '> 5000'))
-}
+  }
 
 PAM_Profiles <- map_dfr(1:25, function(i) {
   
@@ -263,7 +263,7 @@ PAM_Profiles_Table <- PAM_Profiles %>%
 PAM_external_profiles <- map_dfr(1:25, function(i){
   
   df <- imputed_list[[i]] %>%
-    mutate(cluster = factor(PAMaligned_clusters[[i]]))
+    mutate(cluster = factor(majority_clusters))
   
   df %>%
     group_by(cluster) %>%
