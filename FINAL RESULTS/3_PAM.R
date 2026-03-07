@@ -78,15 +78,15 @@ for(i in 1:25) {
   DataToTransform <- imputed_list[[i]]
   TransformedData <- PAM_transformation(DataToTransform)
   
-  KResult <- PAM_silhouette_method(TransformedData)
-  
-  sil_k <- c(sil_k, KResult$best_k)
-  
-  all_sil_results[[i]] <- KResult$results %>%
-    mutate(iteration = i)
+  # KResult <- PAM_silhouette_method(TransformedData)
+  # 
+  # sil_k <- c(sil_k, KResult$best_k)
+  # 
+  # all_sil_results[[i]] <- KResult$results %>%
+  #   mutate(iteration = i)
 }
 
-all_sil_df <- bind_rows(all_sil_results)
+# all_sil_df <- bind_rows(all_sil_results)
 # The results indicate a strong similarity between 3 and 4, thus, 3 was chosen.
 ChosenK <- 3
 
