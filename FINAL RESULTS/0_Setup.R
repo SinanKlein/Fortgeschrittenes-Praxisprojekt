@@ -5,7 +5,7 @@ libraries <- c(
   "labelled", "sjlabelled", "sjmisc",
   "naniar", "mice",
   "cluster", "clue", "fpc", "dbscan",
-  "jmv", "stats", "ggplot2"
+  "jmv", "stats", "ggplot2", "rcompanion"
 )
 
 new_packages <- libraries[!(libraries %in% installed.packages()[, "Package"])]
