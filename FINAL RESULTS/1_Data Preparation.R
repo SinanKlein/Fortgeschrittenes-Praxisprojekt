@@ -130,7 +130,51 @@ map_dfr(missing_cols, ~ {
 FirstVisualInspection
 missing_cols
 
-# 3. Multiple Imputation --------------------------------------------------
+# 3. Representativeness check ---------------------------------------------
+
+# gender differences
+
+male_n <- 34719
+female_n <- 36041
+
+pop <- tibble(
+  ges = c(1, 2),
+  pop_n = c(41241701, 42335439)
+) %>%
+  mutate(ges = as.factor(ges)) %>%
+  mutate(pop_pct = pop_n / sum(pop_n))
+
+sample_dist <- subset1 %>%
+  filter(alter <= 75) %>%
+  count(ges) %>%
+  mutate(sample_pct = n / sum(n))
+
+comparison <- sample_dist %>%
+  left_join(pop, by = "ges") %>%
+  mutate(
+    diff = (sample_pct - pop_pct) * 100
+  )
+
+# men and women population percentages are calculated for men and women of ages 15-75
+# source: https://www-genesis.destatis.de/datenbank/online/table/12211-0001
+
+# Age
+
+subset1 %>%
+  mutate(age_groups = case_when(
+    alter < 20 ~ "<20",
+    alter >= 20 & alter < 40 ~ "20-39",
+    alter >= 40 & alter < 60 ~ "40-59",
+    alter >= 60 & alter < 80 ~ "60-79",
+    alter >= 80 ~ ">=80"
+  )) %>%
+  count(age_groups) %>%
+  mutate(pct = n / sum(n))
+
+# German population, 2023: age group 20-40: 24.5%, 40-60: 26.8%:, 60-80: 22.6%
+# source: https://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Bevoelkerung/Bevoelkerungsstand/Tabellen/bevoelkerung-altersgruppen-deutschland.html
+
+# 4. Multiple Imputation --------------------------------------------------
 
 # Extraction of the variable names
 categorical <- c(names(alcohol_data_full 
