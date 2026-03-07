@@ -4,7 +4,7 @@ library(cluster)
 library(umap)
 library(tidyr)
 
-# choose one imputed dataset
+# choose one imputed Dataset
 df <- imputed_list[[1]]
 
 # simple PAM transformation
@@ -30,25 +30,36 @@ X <- PAM_transformation(df)
 # PAM clustering
 pam_fit <- pam(X, k = 3)
 
-# -------------------------
 # 1. UMAP plot
-# -------------------------
-umap_result <- umap(X)
 
-umap_df <- data.frame(
-  UMAP1 = umap_result$layout[, 1],
-  UMAP2 = umap_result$layout[, 2],
-  cluster = factor(pam_fit$clustering)
-)
+umap_all <- lapply(1:25, function(i) {
+  
+  df_i <- imputed_list[[i]]
+  
+  X_i <- PAM_transformation(df_i)
+  
+  pam_fit_i <- pam(X_i, k = 3)
+  
+  umap_result_i <- umap(X_i)
+  
+  data.frame(
+    UMAP1 = umap_result_i$layout[, 1],
+    UMAP2 = umap_result_i$layout[, 2],
+    cluster = factor(pam_fit_i$clustering),
+    imputation = factor(i)
+  )
+})
+
+umap_df <- bind_rows(umap_all)
 
 ggplot(umap_df, aes(x = UMAP1, y = UMAP2, color = cluster)) +
   geom_point(alpha = 0.7) +
   theme_bw() +
-  labs(title = "UMAP plot of PAM clusters")
+  labs(title = "UMAP plot of PAM clusters across 25 imputed datasets") +
+  facet_wrap(~ imputation)
 
-# -------------------------
 # 2. Line plot of cluster means
-# -------------------------
+
 line_df <- as.data.frame(X) %>%
   mutate(cluster = factor(pam_fit$clustering)) %>%
   group_by(cluster) %>%
