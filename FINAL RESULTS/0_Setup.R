@@ -9,6 +9,7 @@ libraries <- c(
 )
 
 new_packages <- libraries[!(libraries %in% installed.packages()[, "Package"])]
+
 if (length(new_packages) > 0) {
   install.packages(new_packages, dependencies = TRUE)
 }

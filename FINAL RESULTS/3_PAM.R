@@ -15,10 +15,9 @@ PAM_transformation <- function(dataset) {
   
   imputed_subset_pct <- imputed_subset_pct %>% 
     mutate(
-      binge_pct = as.numeric(binge30n) / 30,
-      severity_pct = severity_score / 12
+      binge30n = as.numeric(binge30n),
     ) %>% 
-    select(-c(starts_with("sy"), binge30n, severity_score)) %>%
+    select(-c(starts_with("sy"))) %>%
     scale()
   
   return(imputed_subset_pct)
