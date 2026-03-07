@@ -67,13 +67,11 @@ PAM_FinalClusters_Testing <- PAM_FinalClusters %>%
                                      hne_final %in% c(5,6,7) ~ 2,
                                      hne_final %in% c(8,9,10) ~ 3,
                                      hne_final %in% c(11,12) ~ 4,
-                                     hne_final %in% c(13) ~ 5)) %>% 
-  filter(ges == c(1,2)) %>% 
-  mutate(ges_num = as_numeric(ges)) %>% 
+                                     hne_final %in% c(13) ~ 5)) %>%
   rename("Age" = alter_cat,
          "Education Level" = isced_final,
          "Household Income" = categorized_hne,
-         "Gender (Binary)" = ges_num)
+         "Gender" = ges)
 
 
 
@@ -81,7 +79,7 @@ k <- 4 # number of tests/variables to be tested
 effect_size <- vector("numeric")
 pValues <- vector("numeric")
 
-for (col in setdiff(names(PAM_FinalClusters_Testing), c("cluster", "alter", "ges", "hne_final"))) {
+for (col in setdiff(names(PAM_FinalClusters_Testing), c("cluster", "alter", "hne_final"))) {
   tab <- table(PAM_FinalClusters_Testing$cluster, PAM_FinalClusters_Testing[[col]])
   test <- chisq.test(tab)
   cramers_v <- cramerV(tab)

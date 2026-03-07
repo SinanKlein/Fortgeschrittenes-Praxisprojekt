@@ -53,14 +53,14 @@ Visiualization_Data_Sociodemo <- Visiualization_Data_Sociodemo %>%
          "Education Level" = isced_final) %>% 
   mutate(cluster_size = case_when(cluster == 1 ~ "1 (n = 1378)",
                                   cluster == 2 ~ "2 (n = 506)",
-                                  cluster == 3 ~ "3 (n = 94)"))
+                                  cluster == 3 ~ "3 (n = 94)")) %>% 
+  add_count(cluster, name = "n") %>% 
+  mutate(cluster_size = paste0(cluster, " (n = ", n, ")"))
 
-theme_set(theme_bw())
-
-
-table(Visiualization_Data_Sociodemo$cluster)
 
 # 2) Plotting
+
+theme_set(theme_bw())
 
 EducationGenderPlot <- ggplot(Visiualization_Data_Sociodemo, aes(x = `Education Level`,
                                           fill = Gender)) +
