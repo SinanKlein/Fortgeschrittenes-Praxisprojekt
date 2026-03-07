@@ -4,7 +4,7 @@ library(cluster)
 library(umap)
 library(tidyr)
 
-# choose one imputed dataset
+# choose one imputed Dataset
 df <- imputed_list[[1]]
 
 # simple PAM transformation
