@@ -208,7 +208,7 @@ KMeans_Profiles <- map_dfr(1:25, function(i) {
   
   df <- imputed_list[[i]] %>%
     mutate(
-      cluster = factor(KMeansaligned_clusters[[i]])
+      cluster = factor(KMeans_majority_clusters)
     ) %>%
     mutate(across(starts_with("sy"), ~ as.integer(as.character(.)))) %>%
     mutate(severity_score = rowSums(pick(starts_with("sy"))))
@@ -261,3 +261,4 @@ KMeans_cluster_Sizes_Summary <- KMeans_Profiles %>%
   )
 
 KMeans_Profiles_Table
+KMeans_AggragatedStability

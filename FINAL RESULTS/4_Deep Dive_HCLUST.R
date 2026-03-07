@@ -15,10 +15,10 @@ HCLUST_transformation <- function(dataset) {
   
   imputed_subset_pct <- imputed_subset_pct %>%
     mutate(
-      binge_pct    = as.numeric(binge30n) / 30,
-      severity_pct = severity_score / 12
+      binge_pct    = as.numeric(binge30n),
     ) %>%
     select(-c(starts_with("sy"), binge30n, severity_score))
+  
   
   imputed_subset_pct_trans <- imputed_subset_pct %>%
     mutate(
@@ -208,7 +208,7 @@ HCLUSTaligned_clusters <- lapply(1:25, function(i) {
   align_to_reference(ref_centroids, HCLUST_CuTreeResults[[i]], TransformedData_list[[i]])
 })
 
-# 9.  'PAM' Majority Voting and Defining Clusters --------------------------
+# 9.  'HClust' Majority Voting and Defining Clusters --------------------------
 
 vote_matrix      <- do.call(cbind, HCLUSTaligned_clusters)
 
@@ -277,7 +277,7 @@ imputed_list <- complete(imputation, "all")
 HCLUST_Profiles <- map_dfr(1:25, function(i) {
   
   df <- imputed_list[[i]] %>%
-    mutate(cluster = factor(HCLUSTaligned_clusters[[i]])) %>%
+    mutate(cluster = factor(majority_clusters)) %>%
     mutate(across(starts_with("sy"), ~ as.integer(as.character(.)))) %>%
     mutate(severity_score = rowSums(pick(starts_with("sy"))))
   
