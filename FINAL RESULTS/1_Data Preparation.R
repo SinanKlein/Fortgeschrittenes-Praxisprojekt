@@ -1,7 +1,6 @@
 # 1. Data Preparation 
 
 # 1. Reading in the Data --------------------------------------------------
-
 data <- read_dta("Ausw_ber.dta")
 
 # 2. Cleaning the Data ----------------------------------------------------
@@ -197,3 +196,27 @@ imputation <- mice(data = subset1,
                    method = meth)
 
 imputed_list <- complete(imputation, 'all')
+
+
+# (INTERLUDE 3) Correlation Matrix ----------------------------------------
+
+cor_list <- vector("list", length(imputed_list))
+
+for(i in 1:length(imputed_list)) {
+  
+  set <- imputed_list[[i]]
+  
+  set <- set %>%
+    select(binge30n, starts_with("sy"), ends_with("30gr")) %>%
+    mutate(
+      across(starts_with("sy"), ~ as.numeric(as.character(.))),
+      severity_score = rowSums(across(starts_with("sy")), na.rm = TRUE)
+    ) %>%
+    select(-starts_with("sy"))
+  
+  cor_list[[i]] <- cor(set)
+}
+
+avg_cor <- Reduce("+", cor_list) / length(cor_list)
+
+avg_cor
