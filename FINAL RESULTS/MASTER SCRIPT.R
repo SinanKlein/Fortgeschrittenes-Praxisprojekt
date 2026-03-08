@@ -17,6 +17,7 @@ PAM_external_profiles_pooled
 PAM_AggragatedStability
 pam_line_plot
 pam_boxplot
+Holm_Method
 EducationGenderPlot
 AgeGenderPlot
 GenderPlot
