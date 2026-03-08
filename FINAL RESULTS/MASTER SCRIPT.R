@@ -17,14 +17,13 @@ PAM_external_profiles_pooled
 PAM_AggragatedStability
 pam_line_plot
 pam_boxplot
-
-source("3_Hypothesis Testing.R")
-
-source("4_PAM Visualization.R")
 EducationGenderPlot
 AgeGenderPlot
 GenderPlot
 IncomeGenderPlot
+
+# source("3_Hypothesis Testing.R")
+# source("4_PAM Visualization.R")
 
 source("5_DeepDive_KMeans.R")
 KMeans_Profiles_Table
