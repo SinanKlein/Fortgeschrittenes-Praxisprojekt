@@ -3,6 +3,8 @@ Welcome to the README file for the project: Cluster-Based Profiling of Alcohol C
 
 This project applies cluster-based methods to analyse and profile alcohol consumption behaviour across a series of R scripts, each handling a distinct stage of the workflow.
 
+You can find all the mentioned R Scripts in the FINAL RESULTS folder.
+
 To run the full pipeline, execute only:
 MASTER SCRIPT.R
 This will run all scripts sequentially and produce all results.
