@@ -31,7 +31,7 @@ KMeans_AggragatedStability
 
 source("6_DeepDive_HCLUST.R")
 HCLUST_Profiles_Table
-HCLUST_AggragatedStability
+HCLUST_AggregatedStability
 
 source("7_Additional Plots.R")
 skewness_plot
