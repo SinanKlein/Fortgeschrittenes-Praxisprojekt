@@ -305,28 +305,131 @@ PAM_external_profiles_pooled <- PAM_external_profiles %>%
 PAM_Profiles_Table
 PAM_external_profiles_pooled
 
-# 8. UMAP for PAM Results -------------------------------------------------
+# 8. Line plot for PAM Results -------------------------------------------------
 
-mean_features <- Reduce("+", lapply(TransformedData_list, as.data.frame)) / 25
-
-umap_result <- umap(mean_features)
-
-umap_df <- data.frame(
-  UMAP1   = umap_result$layout[, 1],
-  UMAP2   = umap_result$layout[, 2],
-  cluster = factor(majority_clusters)
+cluster_colors <- c(
+  "Infrequent Drinkers with Low Severity"   = "#E69F00",
+  "Regular Drinkers with Moderate Severity" = "#0072B2",
+  "Problem Drinkers with High Severity"     = "#009E73"
 )
 
-ggplot(umap_df, aes(x = UMAP1, y = UMAP2, color = cluster)) +
-  geom_point(alpha = 0.7, size = 1.5) +
-  scale_color_manual(
-    values = c("1" = "#E63946", "2" = "#2DC653", "3" = "#3A86FF"),
-    labels = c("1" = "Low-risk", "2" = "Moderate-risk", "3" = "High-risk")
-  ) +
+aggregated_set <- lapply(1:25, function(i) {
+  
+  imputed_list[[i]] %>%
+    mutate(
+      id = row_number(),
+      across(starts_with("sy"), ~ as.integer(as.character(.))),
+      severity_score = rowSums(pick(starts_with("sy"))),
+      binge30n = as.numeric(binge30n)
+    ) %>%
+    select(id, bier30gr, wein30gr, spir30gr, mish30gr, binge30n, severity_score)
+}) %>%
+  bind_rows() %>%
+  group_by(id) %>%
+  summarise(
+    bier30gr       = mean(bier30gr, na.rm = TRUE),
+    wein30gr       = mean(wein30gr, na.rm = TRUE),
+    spir30gr       = mean(spir30gr, na.rm = TRUE),
+    mish30gr       = mean(mish30gr, na.rm = TRUE),
+    binge30n       = mean(binge30n, na.rm = TRUE),
+    severity_score = mean(severity_score, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(cluster = factor(majority_clusters))
+
+aggregated_scaled <- aggregated_set %>%
+  select(bier30gr, wein30gr, spir30gr, mish30gr, binge30n, severity_score) %>%
+  scale() %>%
+  as.data.frame() %>%
+  mutate(cluster = aggregated_set$cluster)
+
+line_df <- aggregated_scaled %>%
+  group_by(cluster) %>%
+  summarise(across(everything(), mean), .groups = "drop") %>%
+  pivot_longer(
+    cols = -cluster,
+    names_to = "variable",
+    values_to = "mean_value"
+  ) %>%
+  mutate(
+    variable = factor(
+      variable,
+      levels = c("bier30gr", "wein30gr", "spir30gr", "mish30gr", "binge30n", "severity_score"),
+      labels = c("Beer", "Wine", "Spirits", "Mixed drinks", "Binge days", "Severity")
+    )
+  ) %>%
+  mutate(cluster = recode(cluster,
+                          "1" = "Infrequent Drinkers with Low Severity",
+                          "2" = "Regular Drinkers with Moderate Severity",
+                          "3" = "Problem Drinkers with High Severity"))
+
+pam_line_plot <- ggplot(line_df, aes(x = variable, y = mean_value, group = cluster, color = cluster)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 2) +
   theme_bw() +
   labs(
-    title = "UMAP of PAM Clusters (Averaged Across 25 Imputations)",
-    color = "Cluster"
+    title = "Cluster Profiles",
+    x = "Input variables",
+    y = "Mean",
+    color = "Cluster",
+    subtitle = ""
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  scale_color_manual(values = cluster_colors) +
+  theme(legend.text = element_text(size=12),
+        legend.position = "bottom",
+        plot.title    = element_text(size = 18),
+        
+        strip.text = element_text(size = 13),
+        
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        
+        axis.title.x = element_text(size = 12),
+        axis.title.y = element_text(size = 12))
+
+pam_line_plot
+
+# 9. Boxplot for PAM Results ---------------------------------------------------
+
+boxplot_long <- aggregated_set %>%
+  pivot_longer(
+    cols      = -c(id, cluster),
+    names_to  = "variable",
+    values_to = "value"
+  ) %>%
+  mutate(
+    variable = factor(variable,
+                      levels = c("bier30gr", "wein30gr", "spir30gr", "mish30gr", "binge30n", "severity_score"),
+                      labels = c("Beer", "Wine", "Spirits", "Mixed Drinks", "Binge Drinking Days", "Severity Score")),
+    cluster  = recode(cluster,
+                      "1" = "Infrequent Drinkers\nwith Low Severity",
+                      "2" = "Regular Drinkers\nwith Moderate Severity",
+                      "3" = "Problem Drinkers\nwith High Severity")
   )
 
+cluster_colors_box <- c(
+  "Infrequent Drinkers\nwith Low Severity"    = "#E69F00",
+  "Regular Drinkers\nwith Moderate Severity"  = "#0072B2",
+  "Problem Drinkers\nwith High Severity"      = "#009E73"
+)
 
+pam_boxplot <- ggplot(boxplot_long, aes(x = cluster, y = value, fill = cluster)) +
+  geom_boxplot(alpha = 0.8, outlier.alpha = 0.2) +
+  scale_fill_manual(values = cluster_colors_box) +
+  facet_wrap(~ variable, scales = "free_y", ncol = 3) +
+  theme_bw() +
+  labs(
+    title = "Distributions of Alcohol-Related Variables by Cluster",
+    x     = "",
+    y     = ""
+  ) +
+  theme(
+    legend.position = "none",
+    plot.title      = element_text(size = 18),
+    strip.text      = element_text(size = 13),
+    axis.text.x     = element_text(size = 12),
+    axis.text.y     = element_text(size = 12)
+  )
+
+pam_boxplot
