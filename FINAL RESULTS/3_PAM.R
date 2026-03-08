@@ -304,3 +304,29 @@ PAM_external_profiles_pooled <- PAM_external_profiles %>%
 
 PAM_Profiles_Table
 PAM_external_profiles_pooled
+
+# 8. UMAP for PAM Results -------------------------------------------------
+
+mean_features <- Reduce("+", lapply(TransformedData_list, as.data.frame)) / 25
+
+umap_result <- umap(mean_features)
+
+umap_df <- data.frame(
+  UMAP1   = umap_result$layout[, 1],
+  UMAP2   = umap_result$layout[, 2],
+  cluster = factor(majority_clusters)
+)
+
+ggplot(umap_df, aes(x = UMAP1, y = UMAP2, color = cluster)) +
+  geom_point(alpha = 0.7, size = 1.5) +
+  scale_color_manual(
+    values = c("1" = "#E63946", "2" = "#2DC653", "3" = "#3A86FF"),
+    labels = c("1" = "Low-risk", "2" = "Moderate-risk", "3" = "High-risk")
+  ) +
+  theme_bw() +
+  labs(
+    title = "UMAP of PAM Clusters (Averaged Across 25 Imputations)",
+    color = "Cluster"
+  )
+
+
