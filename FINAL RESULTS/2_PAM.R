@@ -388,8 +388,6 @@ pam_line_plot <- ggplot(line_df, aes(x = variable, y = mean_value, group = clust
         axis.title.x = element_text(size = 12),
         axis.title.y = element_text(size = 12))
 
-pam_line_plot
-
 # 9. Boxplot for PAM Results ---------------------------------------------------
 
 boxplot_long <- aggregated_set %>%
@@ -431,5 +429,3 @@ pam_boxplot <- ggplot(boxplot_long, aes(x = cluster, y = value, fill = cluster))
     axis.text.x     = element_text(size = 12),
     axis.text.y     = element_text(size = 12)
   )
-
-pam_boxplot

@@ -16,5 +16,3 @@ skewness_plot <- ggplot(plot_data, aes(x = value, y = alc_types)) +
        x = "Average Daily Ethanol Intake (in g)",
        y = "Beverage Type") +
   theme_bw()
-
-skewness_plot
