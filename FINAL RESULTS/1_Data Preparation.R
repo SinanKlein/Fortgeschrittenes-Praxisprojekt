@@ -1,7 +1,9 @@
 # 1. Data Preparation 
 
 # 1. Reading in the Data --------------------------------------------------
-data <- read_dta("Ausw_ber.dta")
+
+datafile <- rstudioapi::selectFile('Please select your data file:')
+data <- read_dta(datafile)
 
 # 2. Cleaning the Data ----------------------------------------------------
 

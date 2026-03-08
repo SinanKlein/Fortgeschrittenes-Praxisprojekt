@@ -1,30 +1,18 @@
-# RUN_ALL.R
 # Master script — sources all project scripts in order
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 cat("Working directory set to:", getwd(), "\n\n")
 
-# =============================================================================
-# Pipeline
-# =============================================================================
+# The whole run-time is up to approx. 30 minutes, due to mainly the multiple imputation
+# and the bootstrapping for stability scores. 
 
-cat("Starting pipeline...\n\n")
-
-cat("[1/4] Running Setup...\n")
 source("0_Setup.R")
-cat("      Setup complete.\n\n")
+source("1_Data Preparation.R")
+source("2_PAM.R")
+source("3_Hypothesis Testing.R")
+source("4_PAM Visualization.R")
+source("5_DeepDive_KMeans.R")
+source("6_DeepDive_HCLUST.R")
+source("7_Additional Plots.R")
 
-cat("[2/4] Running Imputation...\n")
-source("1_Imputation.R")
-cat("      Imputation complete.\n\n")
-
-cat("[3/4] Running Clustering...\n")
-source("2_Clustering.R")
-cat("      Clustering complete.\n\n")
-
-cat("[4/4] Running Analysis...\n")
-source("3_Analysis.R")
-cat("      Analysis complete.\n\n")
-
-cat("Pipeline finished successfully.\n")
