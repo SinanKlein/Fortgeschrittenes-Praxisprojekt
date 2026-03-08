@@ -8,11 +8,31 @@ cat("Working directory set to:", getwd(), "\n\n")
 # and the bootstrapping for stability scores. 
 
 source("0_Setup.R")
+
 source("1_Data Preparation.R")
+
 source("2_PAM.R")
+PAM_Profiles_Table
+PAM_external_profiles_pooled
+PAM_AggragatedStability
+pam_line_plot
+pam_boxplot
+
 source("3_Hypothesis Testing.R")
+
 source("4_PAM Visualization.R")
+EducationGenderPlot
+AgeGenderPlot
+GenderPlot
+IncomeGenderPlot
+
 source("5_DeepDive_KMeans.R")
+KMeans_Profiles_Table
+KMeans_AggragatedStability
+
 source("6_DeepDive_HCLUST.R")
+HCLUST_Profiles_Table
+HCLUST_AggragatedStability
+
 source("7_Additional Plots.R")
 
