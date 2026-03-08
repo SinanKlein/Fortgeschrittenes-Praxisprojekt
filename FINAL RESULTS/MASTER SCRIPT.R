@@ -22,17 +22,13 @@ EducationGenderPlot
 AgeGenderPlot
 GenderPlot
 IncomeGenderPlot
+skewness_plot
 
-# source("3_Hypothesis Testing.R")
-# source("4_PAM Visualization.R")
-
-source("5_DeepDive_KMeans.R")
+source("3_DeepDive_KMeans.R")
 KMeans_Profiles_Table
 KMeans_AggragatedStability
 
-source("6_DeepDive_HCLUST.R")
+source("4_DeepDive_HCLUST.R")
 HCLUST_Profiles_Table
 HCLUST_AggregatedStability
 
-source("7_Additional Plots.R")
-skewness_plot
